@@ -163,6 +163,10 @@ filter (`Ctrl+F`) narrows the module list as you type.
 domain, IP, email, phone, VIN, hash or username, and the matching modules run in
 sequence with a findings summary at the end.
 
+**Links** in the output open in **Brave** when it is installed (otherwise your
+system browser); set an explicit executable path in Settings if you use another
+Chromium build.
+
 **Window chrome**: the top bar carries the workspace views (Dashboard, History,
 Settings), `A-` / `A+` buttons that scale every font between 100% and 140%
 (remembered between launches), a `?` button that opens a walkthrough of every

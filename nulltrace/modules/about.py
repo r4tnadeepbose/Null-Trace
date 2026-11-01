@@ -6,6 +6,13 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.3.2", [
+        "Output links are clickable again: the line index was off by one, so a",
+        "click never found its URL. They now render as a labelled link with the",
+        "address underneath and open in Brave when installed.",
+        "Settings gained a browser path field; links fall back to the system",
+        "browser when Brave is absent.",
+    ]),
     ("1.3.1", [
         "Fixed a crash when opening any module with a dropdown: the border",
         "options passed to the menu widget were not supported, leaving a",
