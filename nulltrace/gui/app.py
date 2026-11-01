@@ -570,7 +570,9 @@ class NullTraceApp(ctk.CTk):
         left = self._card(lower)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         left.grid_columnconfigure(0, weight=1)
-        left.grid_rowconfigure(5, weight=1, minsize=theme.px(80))
+        scale = theme.SCALE
+        left.grid_rowconfigure(5, weight=1,
+                               minsize=theme.px(80 if scale <= 1.25 else 60))
 
         ctk.CTkLabel(left, text="QUICK START", anchor="w",
                      font=theme.font(9, "bold"), text_color=theme.ACCENT
@@ -592,7 +594,7 @@ class NullTraceApp(ctk.CTk):
         recent.grid(row=3, column=0, sticky="ew", padx=18)
         recent.grid_columnconfigure(1, weight=1)
         if records:
-            for index, record in enumerate(records[:4]):
+            for index, record in enumerate(records[:4 if scale <= 1.2 else 3]):
                 ctk.CTkLabel(recent, text=record["started"].replace("T", " ")[5:16],
                              width=theme.px(78), anchor="w", font=theme.mono(10),
                              text_color=theme.FAINT).grid(row=index, column=0, sticky="w")
@@ -631,11 +633,15 @@ class NullTraceApp(ctk.CTk):
 
         coverage = ctk.CTkFrame(left, fg_color="transparent")
         coverage.grid(row=6, column=0, sticky="ew", padx=18, pady=(4, 0))
-        summary = "  ·  ".join(f"{name} {len(items)}" for name, items in self.groups.items())
+        short = {"Recon": "Recon", "Network": "Net", "Web": "Web", "Identity": "ID",
+                 "Utility": "Util", "Vulnerability": "Vuln", "Media": "Media",
+                 "System": "Sys"}
+        summary = "  ·  ".join(f"{short.get(name, name)} {len(items)}"
+                              for name, items in self.groups.items())
         ctk.CTkLabel(coverage, text="COVERAGE", anchor="w", font=theme.font(9, "bold"),
                      text_color=theme.ACCENT).pack(side="left")
         ctk.CTkLabel(coverage, text=summary, anchor="w", font=theme.font(9),
-                     text_color=theme.MUTED, justify="left", wraplength=theme.px(430)
+                     text_color=theme.MUTED, justify="left", wraplength=theme.px(420)
                      ).pack(side="left", padx=(10, 0))
 
         ctk.CTkButton(left, text="OPEN FULL HISTORY", height=30, corner_radius=theme.RADIUS,
@@ -699,9 +705,13 @@ class NullTraceApp(ctk.CTk):
 
         ctk.CTkLabel(body, text="LOCAL PATHS", anchor="w", font=theme.font(9, "bold"),
                      text_color=theme.ACCENT).pack(fill="x", padx=18, pady=(0, 2))
-        ctk.CTkLabel(body, text=f"{CONFIG_PATH}\nhistory.db · kev.json · rdap_dns.json",
-                     anchor="w", justify="left", wraplength=theme.px(300),
+        ctk.CTkLabel(body, text="%APPDATA%\\Null-Trace", anchor="w", justify="left",
+                     wraplength=theme.px(320),
                      font=theme.mono(9), text_color=theme.MUTED
+                     ).pack(fill="x", padx=18)
+        ctk.CTkLabel(body, text="config.json · history.db · kev.json · rdap_dns.json",
+                     anchor="w", justify="left", wraplength=theme.px(320),
+                     font=theme.mono(9), text_color=theme.FAINT
                      ).pack(fill="x", padx=18, pady=(0, 12))
 
     # ------------------------------------------------------------------ module view
