@@ -233,7 +233,7 @@ class NullTraceApp(ctk.CTk):
                      font=theme.font(11)).pack(side="left", padx=(2, 8))
 
         self.full_button = ctk.CTkButton(
-            controls, text="FULLSCREEN", height=30, width=104, corner_radius=theme.RADIUS,
+            controls, text="FULL SCREEN", height=30, width=118, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
             text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
             command=self._toggle_fullscreen)
@@ -323,7 +323,10 @@ class NullTraceApp(ctk.CTk):
         full = not bool(self.attributes("-fullscreen"))
         self.attributes("-fullscreen", full)
         if hasattr(self, "full_button") and self.full_button.winfo_exists():
-            self.full_button.configure(text="WINDOWED" if full else "FULLSCREEN")
+            if full:
+                self.full_button.configure(text="EXIT FULL SCREEN", width=152)
+            else:
+                self.full_button.configure(text="FULL SCREEN", width=118)
 
     # ------------------------------------------------------------------ nav
     def _render_nav(self, needle: str = "") -> None:
@@ -1405,7 +1408,8 @@ class NullTraceApp(ctk.CTk):
             "then every module grouped by category. The list scrolls.",
             "",
             "TOP BAR — DASHBOARD, HISTORY and SETTINGS move between views. A- and A+ resize",
-            "every font (the choice is remembered). FULLSCREEN (F11) hides the window frame.",
+            "every font (the choice is remembered). FULL SCREEN (F11) hides the window",
+            "frame; Escape or EXIT FULL SCREEN brings it back.",
             "The ? button opens this page.",
         ])
 
