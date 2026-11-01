@@ -168,10 +168,11 @@ class NullTraceApp(ctk.CTk):
         ).grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 10))
 
         self.nav_scroll = ctk.CTkScrollableFrame(
-            sidebar, fg_color="transparent", corner_radius=0,
+            sidebar, fg_color="transparent", corner_radius=theme.RADIUS,
+            border_width=1, border_color=theme.BORDER_SOFT,
             scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)
-        self.nav_scroll.grid(row=3, column=0, sticky="nsew", padx=(10, 4), pady=(0, 4))
+        self.nav_scroll.grid(row=3, column=0, sticky="nsew", padx=(10, 10), pady=(0, 6))
         self.nav_scroll.grid_columnconfigure(0, weight=1)
 
         ctk.CTkFrame(sidebar, height=1, fg_color=theme.BORDER_SOFT).grid(
