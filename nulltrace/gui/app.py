@@ -85,38 +85,42 @@ class NullTraceApp(ctk.CTk):
 
     # ------------------------------------------------------------------ shell
     def _mode_icon(self, kind: str):
-        """Sun for dark mode, crescent for light mode.
-
-        Rendered from the system symbol font into a colour-matched image, which
-        keeps the glyph sharp and tinted without depending on Tk font fallbacks.
-        """
+        """Sun for dark mode, crescent for light mode, drawn as clean vector shapes."""
         try:
-            from PIL import Image, ImageFont
+            import math
+
+            from PIL import Image, ImageChops, ImageDraw
         except Exception:
             return None
-        glyph = "\u2600" if kind == "sun" else "\u263e"
-        font = None
-        for candidate in (r"C:\Windows\Fonts\seguisym.ttf",
-                          r"C:\Windows\Fonts\segoeui.ttf",
-                          "DejaVuSans.ttf"):
-            try:
-                font = ImageFont.truetype(candidate, 44)
-                break
-            except Exception:
-                continue
-        if font is None:
-            return None
-        canvas = Image.new("RGBA", (72, 72), (0, 0, 0, 0))
-        from PIL import ImageDraw
-        ImageDraw.Draw(canvas).text((36, 36), glyph, font=font, anchor="mm",
-                                    fill=theme.ACCENT)
-        box = canvas.getbbox()
-        if box:
-            pad = 2
-            canvas = canvas.crop((max(0, box[0] - pad), max(0, box[1] - pad),
-                                  box[2] + pad, box[3] + pad))
-        canvas = canvas.resize((18, 18), Image.LANCZOS)
-        return ctk.CTkImage(light_image=canvas, dark_image=canvas, size=(18, 18))
+
+        box = 72
+        red = tuple(int(theme.ACCENT[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
+
+        if kind == "sun":
+            tile = Image.new("RGBA", (box, box), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(tile)
+            draw.ellipse((24, 24, 48, 48), fill=red)
+            for step in range(8):
+                angle = math.radians(step * 45)
+                draw.line((36 + 17 * math.cos(angle), 36 + 17 * math.sin(angle),
+                           36 + 25 * math.cos(angle), 36 + 25 * math.sin(angle)),
+                          fill=red, width=4)
+        else:
+            disc = Image.new("RGBA", (box, box), (0, 0, 0, 0))
+            ImageDraw.Draw(disc).ellipse((10, 10, 62, 62), fill=red)
+            bite = Image.new("RGBA", (box, box), (0, 0, 0, 0))
+            ImageDraw.Draw(bite).ellipse((24, -2, 76, 50), fill=red)
+            shape = ImageChops.subtract(disc, bite)
+            bounds = shape.getbbox()
+            shape = shape.crop(bounds)
+            scale = 58 / max(shape.size)
+            shape = shape.resize((max(1, round(shape.width * scale)),
+                                  max(1, round(shape.height * scale))), Image.LANCZOS)
+            tile = Image.new("RGBA", (box, box), (0, 0, 0, 0))
+            tile.alpha_composite(shape, ((box - shape.width) // 2,
+                                         (box - shape.height) // 2))
+
+        return ctk.CTkImage(light_image=tile, dark_image=tile, size=(20, 20))
 
     def _brand_photo(self):
         """Wordmark drawn with a soft red halo, like a tube that never quite focused."""
@@ -259,7 +263,7 @@ class NullTraceApp(ctk.CTk):
         }
         self.theme_button = ctk.CTkButton(
             controls, text="", image=self._mode_images["moon" if theme.is_light() else "sun"],
-            height=28, width=40, corner_radius=theme.RADIUS,
+            height=30, width=34, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
             hover_color=theme.ELEV, command=self._toggle_theme)
         self.theme_button.pack(side="left", padx=(0, 6))
