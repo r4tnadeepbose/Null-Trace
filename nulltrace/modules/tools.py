@@ -58,15 +58,17 @@ def _environment(ctx) -> None:
         ctx.muted("  data/ folder not found — modules are using built-in defaults")
 
     ctx.section("External tools")
-    for tool, hint in (
+    from .metadata import exiftool_path
+    tools = [
         ("exiftool", "full metadata extraction"),
         ("git", "update checks and tool installs"),
         ("tor", "dark web module via SOCKS"),
         ("go", "external Go tooling"),
         ("node", "JS-based helpers"),
         ("winget", "package installation on Windows"),
-    ):
-        path = shutil.which(tool)
+    ]
+    for tool, hint in tools:
+        path = exiftool_path() if tool == "exiftool" else shutil.which(tool)
         (ctx.ok if path else ctx.muted)(f"  {tool:<10} {path or 'not found'}   ({hint})")
 
     ctx.section("API keys")

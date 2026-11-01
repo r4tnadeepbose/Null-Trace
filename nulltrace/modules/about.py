@@ -6,6 +6,10 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.2.1", [
+        "ExifTool is discovered on PATH or in its usual install folders, so the",
+        "Metadata module picks it up without a reboot after installation.",
+    ]),
     ("1.2.0", [
         "Eight new modules: TLS Inspector, Wayback, BGP / ASN, DNS Propagation,",
         "IP Reputation (DNSBL), Reverse IP, Site Files and File Triage.",

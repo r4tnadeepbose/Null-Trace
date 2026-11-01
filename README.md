@@ -51,6 +51,9 @@ pip install -r requirements.txt
 python scan.py
 ```
 
+Optional extras for development and packaging: `pip install -r requirements-dev.txt`
+(PyInstaller for the Windows build).
+
 Debian/Ubuntu need tkinter, which is a system package, not a pip one:
 
 ```bash
@@ -236,7 +239,8 @@ Null-Trace fetches the token first; if it still fails you are rate limited — w
 listening on `127.0.0.1:9050` (Tor Browser: `tor.exe`). Adjust the proxy in Settings.
 
 **Metadata shows fewer tags than expected** — install ExifTool (Toolkit → Install
-ExifTool, or `winget install OliverBetz.ExifTool`). Pillow only reads image EXIF.
+ExifTool, or `winget install OliverBetz.ExifTool`). The app finds it on PATH or in
+`%LOCALAPPDATA%\Programs\ExifTool`, so no reboot is needed after installing.
 
 **Port scan needs administrator?** No — it uses ordinary TCP connect. Some hosts
 rate-limit or block SYN-less scans; that's their firewall, not a bug.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -20,8 +21,29 @@ HIGHLIGHT = {
 }
 
 
+def exiftool_path() -> str | None:
+    """PATH first, then the usual install locations (winget, manual zip)."""
+    for name in ("exiftool", "ExifTool"):
+        found = shutil.which(name)
+        if found:
+            return found
+    candidates = []
+    local = os.environ.get("LOCALAPPDATA")
+    if local:
+        candidates.append(Path(local) / "Programs" / "ExifTool" / "ExifTool.exe")
+    candidates += [
+        Path("C:/Program Files/ExifTool/exiftool.exe"),
+        Path("C:/Program Files/ExifTool/ExifTool.exe"),
+        Path("C:/exiftool/exiftool.exe"),
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
 def _exiftool(path: Path) -> dict | None:
-    exe = shutil.which("exiftool")
+    exe = exiftool_path()
     if not exe:
         return None
     try:
@@ -136,7 +158,7 @@ def run(ctx) -> None:
 
     if not data:
         ctx.warn("No metadata could be read.")
-        if not shutil.which("exiftool"):
+        if not exiftool_path():
             ctx.note("ExifTool is not installed — it reads metadata from far more formats than Pillow.")
             ctx.link("Get ExifTool", "https://exiftool.org")
         return
