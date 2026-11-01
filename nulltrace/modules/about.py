@@ -6,6 +6,11 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.2.2", [
+        "Tor Expert Bundle installed and detected from the usual folders; the",
+        "dashboard distinguishes running, installed and missing, and Toolkit",
+        "gains a Start Tor action that waits for the SOCKS port.",
+    ]),
     ("1.2.1", [
         "ExifTool is discovered on PATH or in its usual install folders, so the",
         "Metadata module picks it up without a reboot after installation.",

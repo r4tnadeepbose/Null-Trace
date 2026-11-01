@@ -235,8 +235,10 @@ HackerTarget usually still answers; wait a minute and retry.
 **Dark Web Search returns the Ahmia landing page** — Ahmia rotates an anti-bot token.
 Null-Trace fetches the token first; if it still fails you are rate limited — wait.
 
-**Tor checkbox fails** — install `requests[socks]` and make sure the Tor service is
-listening on `127.0.0.1:9050` (Tor Browser: `tor.exe`). Adjust the proxy in Settings.
+**Tor checkbox fails** — the SOCKS port is not open. Open Toolkit → Start Tor (the
+Expert Bundle is installed at `%LOCALAPPDATA%\Programs\Tor`), or run `tor.exe
+--SocksPort 9050` yourself. The dashboard shows `Tor SOCKS: running` once it is up,
+`installed` when the binary is present but stopped.
 
 **Metadata shows fewer tags than expected** — install ExifTool (Toolkit → Install
 ExifTool, or `winget install OliverBetz.ExifTool`). The app finds it on PATH or in

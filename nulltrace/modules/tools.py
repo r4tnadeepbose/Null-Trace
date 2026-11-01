@@ -7,6 +7,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from ..config import CONFIG, CONFIG_PATH, KEY_LABELS, data_dir
@@ -14,7 +15,7 @@ from ..datasets import reloadable
 from ..job import Field, Module
 from ..version import VERSION
 
-MODES = ("Environment check", "Install ExifTool", "Check for updates")
+MODES = ("Environment check", "Install ExifTool", "Start Tor", "Check for updates")
 
 REQUIRED = [
     ("requests", "requests"), ("dns", "dnspython"), ("customtkinter", "customtkinter"),
@@ -58,6 +59,7 @@ def _environment(ctx) -> None:
         ctx.muted("  data/ folder not found — modules are using built-in defaults")
 
     ctx.section("External tools")
+    from ..net import tor_path
     from .metadata import exiftool_path
     tools = [
         ("exiftool", "full metadata extraction"),
@@ -68,7 +70,12 @@ def _environment(ctx) -> None:
         ("winget", "package installation on Windows"),
     ]
     for tool, hint in tools:
-        path = exiftool_path() if tool == "exiftool" else shutil.which(tool)
+        if tool == "exiftool":
+            path = exiftool_path()
+        elif tool == "tor":
+            path = tor_path()
+        else:
+            path = shutil.which(tool)
         (ctx.ok if path else ctx.muted)(f"  {tool:<10} {path or 'not found'}   ({hint})")
 
     ctx.section("API keys")
@@ -114,6 +121,42 @@ def _install_exiftool(ctx) -> None:
         ctx.warn("winget install did not succeed. Manual download: https://exiftool.org")
 
 
+def _start_tor(ctx) -> None:
+    from ..net import tor_path as resolve_tor, tor_running as is_running
+    exe = resolve_tor()
+    if not exe:
+        ctx.error("tor.exe was not found. Install the Tor Expert Bundle or Tor Browser.")
+        ctx.link("Tor download", "https://www.torproject.org/download/tor/")
+        return
+    if is_running():
+        ctx.ok("Tor is already listening on 127.0.0.1:9050.")
+        return
+    ctx.note(f"Starting {exe}")
+    log_path = data_dir() / "tor.log"
+    flags = 0
+    if sys.platform == "win32":
+        flags = subprocess.CREATE_NO_WINDOW | subprocess.DETACHED_PROCESS
+    try:
+        with log_path.open("ab") as log:
+            subprocess.Popen([exe, "--SocksPort", "9050"], cwd=str(Path(exe).parent),
+                             stdout=log, stderr=log, stdin=subprocess.DEVNULL,
+                             creationflags=flags)
+    except OSError as exc:
+        ctx.error(f"Could not start Tor: {exc}")
+        return
+    ctx.status("Waiting for the SOCKS port ...")
+    deadline = time.time() + 25
+    while time.time() < deadline:
+        ctx.check_cancel()
+        if is_running():
+            ctx.ok("Tor is up on 127.0.0.1:9050 — the Dark Web module can route through it.")
+            ctx.kv("Log", log_path)
+            return
+        time.sleep(0.5)
+    ctx.warn("Tor did not open the port within 25 seconds.")
+    ctx.muted(f"Inspect {log_path} for the reason; the first start can be slow.")
+
+
 def _updates(ctx) -> None:
     ctx.kv("Installed version", VERSION)
     root = Path(__file__).resolve().parents[2]
@@ -146,6 +189,8 @@ def run(ctx) -> None:
         _environment(ctx)
     elif mode == "Install ExifTool":
         _install_exiftool(ctx)
+    elif mode == "Start Tor":
+        _start_tor(ctx)
     else:
         _updates(ctx)
 

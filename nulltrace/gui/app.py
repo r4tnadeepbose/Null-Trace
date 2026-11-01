@@ -20,6 +20,7 @@ from .. import theme
 from ..config import CONFIG, CONFIG_PATH, KEY_LABELS
 from ..history import add_scan, clear_history, delete_scan, list_scans, load_scan
 from ..modules.metadata import exiftool_path
+from ..net import tor_path, tor_running
 from ..job import Event, Field, JobRunner, Module
 from ..modules import all_modules, grouped
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
@@ -659,8 +660,9 @@ class NullTraceApp(ctk.CTk):
             ("Platform", f"{platform.system()} {platform.release()}", True),
             ("ExifTool", "installed" if exiftool_path() else "not installed",
              bool(exiftool_path())),
-            ("Tor SOCKS", "installed" if shutil.which("tor") else "not installed",
-             bool(shutil.which("tor"))),
+            ("Tor SOCKS",
+             "running" if tor_running() else ("installed" if tor_path() else "not installed"),
+             bool(tor_path())),
         ):
             row = ctk.CTkFrame(body, fg_color="transparent")
             row.pack(fill="x", padx=18)
@@ -1370,7 +1372,8 @@ class NullTraceApp(ctk.CTk):
             "browse dialog. Run scan starts the job (Ctrl+Enter); Stop aborts between steps.",
             "",
             "Some modules name API keys in their header. Without a key they still run and",
-            "report what was skipped instead of failing.",
+            "report what was skipped instead of failing. Toolkit → Start Tor brings up the",
+            "SOCKS proxy the Dark Web module uses.",
         ])
 
         block("Reading the output", [

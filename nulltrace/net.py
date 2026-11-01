@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import re
+import shutil
 import socket
 import ssl
 import threading
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -107,6 +110,38 @@ def reverse_dns(ip: str) -> list[str]:
     except (socket.herror, socket.gaierror, OSError):
         return []
     return [host, *aliases]
+
+
+def tor_path() -> str | None:
+    """Locate tor.exe: PATH first, then the usual bundle and browser folders."""
+    found = shutil.which("tor")
+    if found:
+        return found
+    candidates = []
+    local = os.environ.get("LOCALAPPDATA")
+    program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
+    if local:
+        candidates += [
+            Path(local) / "Programs" / "Tor" / "tor" / "tor.exe",
+            Path(local) / "Programs" / "Tor" / "tor.exe",
+            Path(local) / "Programs" / "Tor Browser" / "Browser" / "TorBrowser" / "Tor" / "tor.exe",
+        ]
+    candidates += [
+        Path(program_files) / "Tor" / "tor.exe",
+        Path(program_files) / "Tor Browser" / "Browser" / "TorBrowser" / "Tor" / "tor.exe",
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def tor_running(host: str = "127.0.0.1", port: int = 9050, timeout: float = 0.6) -> bool:
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
 def tls_certificate(host: str, port: int = 443) -> dict[str, Any]:
