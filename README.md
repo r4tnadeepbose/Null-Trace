@@ -18,6 +18,22 @@ source; nothing is proxied through a Null-Trace server, because there isn't one.
 
 ---
 
+## Screenshots
+
+Dashboard — run counters, quick start, recent runs, the module browser and environment at a glance.
+
+![Dashboard](docs/screenshots/01-dashboard.png)
+
+| Quick Recon — one target, matching modules, findings summary | Port Scan — open ports, banners and passive cross-check |
+|---|---|
+| ![Quick Recon](docs/screenshots/02-quick-recon.png) | ![Port Scan](docs/screenshots/03-scan-output.png) |
+
+| History — every run stored locally, filterable and replayable | How it works — the built-in walkthrough behind the `?` button |
+|---|---|
+| ![History](docs/screenshots/04-history.png) | ![How it works](docs/screenshots/05-help.png) |
+
+---
+
 ## Requirements
 
 | | |
