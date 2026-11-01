@@ -106,19 +106,22 @@ class NullTraceApp(ctk.CTk):
         pad = 14
         canvas = Image.new("RGBA", (width + pad * 2, height + pad * 2), (0, 0, 0, 0))
 
-        glow_alpha = "55" if theme.is_light() else "e6"
-        ghost_alpha = "33" if theme.is_light() else "88"
-        glow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-        ImageDraw.Draw(glow).text((pad, pad), text, font=font, fill=theme.ACCENT + glow_alpha)
-        glow = glow.filter(ImageFilter.GaussianBlur(6))
-        canvas.alpha_composite(glow)
-        canvas.alpha_composite(glow, (1, 1))
+        if theme.is_light():
+            # white mode keeps the mark clean: no halo, no dark fringe
+            ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
+        else:
+            glow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+            ImageDraw.Draw(glow).text((pad, pad), text, font=font, fill=theme.ACCENT + "e6")
+            glow = glow.filter(ImageFilter.GaussianBlur(6))
+            canvas.alpha_composite(glow)
+            canvas.alpha_composite(glow, (1, 1))
 
-        ghost = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-        ImageDraw.Draw(ghost).text((pad + 1, pad), text, font=font, fill=theme.ACCENT + ghost_alpha)
-        canvas.alpha_composite(ghost.filter(ImageFilter.GaussianBlur(2)))
+            ghost = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+            ImageDraw.Draw(ghost).text((pad + 1, pad), text, font=font,
+                                       fill=theme.ACCENT + "88")
+            canvas.alpha_composite(ghost.filter(ImageFilter.GaussianBlur(2)))
 
-        ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
+            ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
         return ctk.CTkImage(light_image=canvas, dark_image=canvas,
                             size=(canvas.width, canvas.height))
 
