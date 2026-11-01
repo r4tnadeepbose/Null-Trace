@@ -273,7 +273,14 @@ class NullTraceApp(ctk.CTk):
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
             text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
             command=self._toggle_fullscreen)
-        self.full_button.pack(side="left")
+        self.full_button.pack(side="left", padx=(0, 6))
+
+        self.help_button = ctk.CTkButton(
+            controls, text="?", width=32, height=30, corner_radius=theme.RADIUS,
+            fg_color="transparent", border_width=1, border_color=theme.BORDER,
+            text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(13, "bold"),
+            command=self._show_help)
+        self.help_button.pack(side="left")
 
         self.body = ctk.CTkFrame(right, fg_color=theme.BG, corner_radius=0)
         self.body.grid(row=1, column=0, sticky="nsew")
@@ -285,6 +292,9 @@ class NullTraceApp(ctk.CTk):
             self.crumb.configure(text=text.upper())
 
     def _mark_view(self, target: str | None) -> None:
+        if getattr(self, "help_button", None) is not None and self.help_button.winfo_exists():
+            self.help_button.configure(
+                fg_color=theme.ACCENT_DIM if target == "help" else "transparent")
         for name, button in getattr(self, "view_buttons", {}).items():
             if name == target:
                 button.configure(text_color=theme.TEXT, fg_color=theme.ACCENT_DIM)
@@ -393,6 +403,8 @@ class NullTraceApp(ctk.CTk):
             self._show_history()
         elif target == "settings":
             self._show_settings()
+        elif target == "help":
+            self._show_help()
 
     # ------------------------------------------------------------------ helpers
     def _grid_rows(self, weights: dict[int, int]) -> None:
@@ -1279,6 +1291,173 @@ class NullTraceApp(ctk.CTk):
                       ).grid(row=0, column=2, sticky="e")
 
     # ------------------------------------------------------------------ history
+    def _show_help(self) -> None:
+        self.view = "help"
+        self.current = None
+        self._set_crumb("help")
+        self._mark_view("help")
+        self._clear_body()
+        self._grid_rows({0: 0, 1: 1})
+        self._page_header(
+            "How it works",
+            "Every part of the window, how a scan flows, and where everything is kept.")
+
+        holder = ctk.CTkFrame(self.body, fg_color="transparent")
+        holder.grid(row=1, column=0, sticky="nsew", padx=30, pady=(0, 20))
+        holder.grid_columnconfigure(0, weight=1)
+        holder.grid_rowconfigure(0, weight=1)
+
+        scroll = ctk.CTkScrollableFrame(holder, fg_color="transparent", corner_radius=0,
+                                        scrollbar_button_color=theme.ELEV,
+                                        scrollbar_button_hover_color=theme.BORDER)
+        scroll.grid(row=0, column=0, sticky="nsew")
+        scroll.grid_columnconfigure(0, weight=1)
+        scroll.grid_columnconfigure(1, weight=1)
+        row = 0
+
+        def block(title: str, lines: list[str], span: int = 2) -> None:
+            nonlocal row
+            card = self._card(scroll)
+            card.grid(row=row, column=0, columnspan=span, sticky="ew", pady=(0, 8))
+            card.grid_columnconfigure(0, weight=1)
+            ctk.CTkLabel(card, text=title.upper(), anchor="w",
+                         font=theme.font(9, "bold"), text_color=theme.ACCENT
+                         ).grid(row=0, column=0, sticky="w", padx=18, pady=(12, 4))
+            body = ctk.CTkLabel(card, text="\n".join(lines), anchor="w", justify="left",
+                                wraplength=980, font=theme.font(11), text_color=theme.MUTED)
+            body.grid(row=1, column=0, sticky="w", padx=18, pady=(0, 14))
+            row += 1
+
+        block("The window", [
+            "SIDEBAR — the Null-Trace mark, a filter (Ctrl+F), the red QUICK RECON button,",
+            "then every module grouped by category. The list scrolls.",
+            "",
+            "TOP BAR — DASHBOARD, HISTORY and SETTINGS move between views. The sun / crescent",
+            "switches between the black and white themes. FULLSCREEN (F11) hides the window",
+            "frame. The ? button opens this page.",
+        ])
+
+        block("Quick Recon", [
+            "One field for a domain, IP address, email, phone number, VIN, file hash or",
+            "username. The type is detected from the shape of what you paste:",
+            "",
+            "  1.1.1.1                 → IP Intel + Port Scan",
+            "  example.com             → DNS, WHOIS, host headers, subdomains",
+            "  someone@example.com     → Email Intel + Exposure Audit",
+            "  +14155552671            → Phone Intel",
+            "  1HGCM82633A004352       → VIN Decoder",
+            "  64 hex characters       → Hash Lookup",
+            "  anything else           → Username Scan",
+            "",
+            "The sweep ends with a FINDINGS table: modules run, rows returned, warnings,",
+            "errors and a one-word assessment.",
+        ])
+
+        block("Modules", [
+            "Each tool is a module with its own form. Fields marked * are required.",
+            "CHOICE fields are dropdowns, CHECKBOXES are opt-in steps, FILE fields open a",
+            "browse dialog. Run scan starts the job (Ctrl+Enter); Stop aborts between steps.",
+            "",
+            "Some modules name API keys in their header. Without a key they still run and",
+            "report what was skipped instead of failing.",
+        ])
+
+        block("Reading the output", [
+            "RED HEADINGS     a section from the module",
+            "GREY LABELS      the field name; the value next to it is the data",
+            "UNDERLINED RED   a link — click to open it in your browser",
+            "ALIGNED COLUMNS  tables; the rule separates the header",
+            "",
+            "The line beside OUTPUT shows the state: [ RUNNING · 2.1S ], then",
+            "[ COMPLETED · 1.4S · 16 LINES ] or [ FAILED ].",
+        ])
+
+        block("Runs and history", [
+            "Every finished run is stored locally. HISTORY lists them newest first; type in",
+            "the filter to narrow, OPEN replays the exact output, DELETE removes one entry,",
+            "CLEAR ALL wipes the table. COPY puts the output on the clipboard and EXPORT",
+            "(Ctrl+S) writes a text file.",
+        ])
+
+        block("API keys", [
+            "Open SETTINGS and paste keys for the services you use. They are stored in",
+            "config.json on this machine and sent only to that provider. SHOW KEYS reveals",
+            "what is typed. Keys are optional; free sources cover most modules.",
+        ])
+
+        card = self._card(scroll)
+        card.grid(row=row, column=0, sticky="ew", padx=(0, 4), pady=(0, 8))
+        card.grid_columnconfigure(1, weight=1)
+        ctk.CTkLabel(card, text="SHORTCUTS", anchor="w", font=theme.font(9, "bold"),
+                     text_color=theme.ACCENT).grid(row=0, column=0, columnspan=2,
+                                                   sticky="w", padx=18, pady=(12, 6))
+        shortcuts = (
+            ("Ctrl+Enter", "Run the current module"),
+            ("Ctrl+S", "Export the output"),
+            ("Ctrl+F", "Focus the module filter"),
+            ("F11", "Toggle fullscreen"),
+            ("Escape", "Leave fullscreen, or clear the filter"),
+        )
+        for index, (keys, action) in enumerate(shortcuts, start=1):
+            ctk.CTkLabel(card, text=keys, anchor="w", width=110,
+                         font=theme.mono(10), text_color=theme.TEXT
+                         ).grid(row=index, column=0, sticky="w", padx=18, pady=1)
+            ctk.CTkLabel(card, text=action, anchor="w", font=theme.font(10),
+                         text_color=theme.MUTED
+                         ).grid(row=index, column=1, sticky="w", pady=1)
+        ctk.CTkFrame(card, height=8, fg_color="transparent").grid(row=len(shortcuts) + 1,
+                                                                 column=0)
+
+        card = self._card(scroll)
+        card.grid(row=row, column=1, sticky="ew", padx=(4, 0), pady=(0, 8))
+        card.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(card, text="WHERE YOUR DATA LIVES", anchor="w",
+                     font=theme.font(9, "bold"), text_color=theme.ACCENT
+                     ).grid(row=0, column=0, sticky="w", padx=18, pady=(12, 6))
+        for index, line in enumerate((
+            f"{CONFIG_PATH}",
+            "   keys and network settings",
+            "history.db",
+            "   every stored run",
+            "crash.log",
+            "   anything that went wrong",
+            "kev.json · rdap_dns.json",
+            "   caches of public feeds",
+        ), start=1):
+            ctk.CTkLabel(card, text=line, anchor="w", justify="left", wraplength=440,
+                         font=theme.mono(9) if index % 2 else theme.font(9),
+                         text_color=theme.TEXT if index % 2 else theme.FAINT
+                         ).grid(row=index, column=0, sticky="w", padx=18)
+        ctk.CTkFrame(card, height=8, fg_color="transparent").grid(row=99, column=0)
+        row += 1
+
+        catalogue = self._card(scroll)
+        catalogue.grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        catalogue.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(catalogue, text="EVERY MODULE", anchor="w",
+                     font=theme.font(9, "bold"), text_color=theme.ACCENT
+                     ).grid(row=0, column=0, sticky="w", padx=18, pady=(12, 4))
+        inner = 1
+        for category, modules in self.groups.items():
+            ctk.CTkLabel(catalogue, text=f"[ {category.upper()} ]", anchor="w",
+                         font=theme.font(9, "bold"), text_color=theme.FAINT
+                         ).grid(row=inner, column=0, sticky="w", padx=18, pady=(10, 2))
+            inner += 1
+            for module in modules:
+                line = f"{module.title.upper()} — {module.summary}"
+                ctk.CTkLabel(catalogue, text=line, anchor="w", justify="left",
+                             wraplength=980, font=theme.font(10), text_color=theme.MUTED
+                             ).grid(row=inner, column=0, sticky="w", padx=28, pady=1)
+                inner += 1
+        ctk.CTkFrame(catalogue, height=10, fg_color="transparent").grid(row=inner,
+                                                                       column=0)
+        row += 1
+
+        block("Before you scan", [
+            "Null-Trace is for authorised work: your own systems, contracted tests and",
+            "public data. A finding is evidence of exposure, not permission to use it.",
+        ])
+
     def _show_history(self, needle: str = "") -> None:
         self.view = "history"
         self.current = None
