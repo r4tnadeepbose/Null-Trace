@@ -1,5 +1,5 @@
 APP_NAME = "Null-Trace"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 TAGLINE = "Open-source intelligence workbench"
 AUTHOR = "Ratnadeep Bose"
 GITHUB = "https://github.com/r4tnadeepbose"

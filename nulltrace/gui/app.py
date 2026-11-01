@@ -43,7 +43,6 @@ class FieldWidget:
 
 class NullTraceApp(ctk.CTk):
     def __init__(self) -> None:
-        theme.apply(CONFIG.get("ui", "appearance", "dark"))
         super().__init__(fg_color=theme.BG)
         self._set_window_icon()
         self.title(f"{APP_NAME.upper()}  //  OSINT WORKBENCH")
@@ -84,44 +83,6 @@ class NullTraceApp(ctk.CTk):
         self.after(200, self._poll_queue)
 
     # ------------------------------------------------------------------ shell
-    def _mode_icon(self, kind: str):
-        """Sun for dark mode, crescent for light mode, drawn as clean vector shapes."""
-        try:
-            import math
-
-            from PIL import Image, ImageChops, ImageDraw
-        except Exception:
-            return None
-
-        box = 72
-        red = tuple(int(theme.ACCENT[i:i + 2], 16) for i in (1, 3, 5)) + (255,)
-
-        if kind == "sun":
-            tile = Image.new("RGBA", (box, box), (0, 0, 0, 0))
-            draw = ImageDraw.Draw(tile)
-            draw.ellipse((24, 24, 48, 48), fill=red)
-            for step in range(8):
-                angle = math.radians(step * 45)
-                draw.line((36 + 17 * math.cos(angle), 36 + 17 * math.sin(angle),
-                           36 + 25 * math.cos(angle), 36 + 25 * math.sin(angle)),
-                          fill=red, width=4)
-        else:
-            disc = Image.new("RGBA", (box, box), (0, 0, 0, 0))
-            ImageDraw.Draw(disc).ellipse((10, 10, 62, 62), fill=red)
-            bite = Image.new("RGBA", (box, box), (0, 0, 0, 0))
-            ImageDraw.Draw(bite).ellipse((24, -2, 76, 50), fill=red)
-            shape = ImageChops.subtract(disc, bite)
-            bounds = shape.getbbox()
-            shape = shape.crop(bounds)
-            scale = 58 / max(shape.size)
-            shape = shape.resize((max(1, round(shape.width * scale)),
-                                  max(1, round(shape.height * scale))), Image.LANCZOS)
-            tile = Image.new("RGBA", (box, box), (0, 0, 0, 0))
-            tile.alpha_composite(shape, ((box - shape.width) // 2,
-                                         (box - shape.height) // 2))
-
-        return ctk.CTkImage(light_image=tile, dark_image=tile, size=(20, 20))
-
     def _brand_photo(self):
         """Wordmark drawn with a soft red halo, like a tube that never quite focused."""
         try:
@@ -145,22 +106,17 @@ class NullTraceApp(ctk.CTk):
         pad = 14
         canvas = Image.new("RGBA", (width + pad * 2, height + pad * 2), (0, 0, 0, 0))
 
-        if theme.is_light():
-            # white mode keeps the mark clean: no halo, no dark fringe
-            ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
-        else:
-            glow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-            ImageDraw.Draw(glow).text((pad, pad), text, font=font, fill=theme.ACCENT + "e6")
-            glow = glow.filter(ImageFilter.GaussianBlur(6))
-            canvas.alpha_composite(glow)
-            canvas.alpha_composite(glow, (1, 1))
+        glow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        ImageDraw.Draw(glow).text((pad, pad), text, font=font, fill=theme.ACCENT + "e6")
+        glow = glow.filter(ImageFilter.GaussianBlur(6))
+        canvas.alpha_composite(glow)
+        canvas.alpha_composite(glow, (1, 1))
 
-            ghost = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-            ImageDraw.Draw(ghost).text((pad + 1, pad), text, font=font,
-                                       fill=theme.ACCENT + "88")
-            canvas.alpha_composite(ghost.filter(ImageFilter.GaussianBlur(2)))
+        ghost = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        ImageDraw.Draw(ghost).text((pad + 1, pad), text, font=font, fill=theme.ACCENT + "88")
+        canvas.alpha_composite(ghost.filter(ImageFilter.GaussianBlur(2)))
 
-            ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
+        ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
         return ctk.CTkImage(light_image=canvas, dark_image=canvas,
                             size=(canvas.width, canvas.height))
 
@@ -257,17 +213,6 @@ class NullTraceApp(ctk.CTk):
         ctk.CTkLabel(controls, text="|", text_color=theme.FAINT,
                      font=theme.font(11)).pack(side="left", padx=8)
 
-        self._mode_images = {
-            "sun": self._mode_icon("sun"),
-            "moon": self._mode_icon("moon"),
-        }
-        self.theme_button = ctk.CTkButton(
-            controls, text="", image=self._mode_images["moon" if theme.is_light() else "sun"],
-            height=30, width=34, corner_radius=theme.RADIUS,
-            fg_color="transparent", border_width=1, border_color=theme.BORDER,
-            hover_color=theme.ELEV, command=self._toggle_theme)
-        self.theme_button.pack(side="left", padx=(0, 6))
-
         self.full_button = ctk.CTkButton(
             controls, text="FULLSCREEN", height=28, width=104, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
@@ -301,15 +246,6 @@ class NullTraceApp(ctk.CTk):
             else:
                 button.configure(text_color=theme.MUTED, fg_color="transparent")
 
-    def _toggle_theme(self) -> None:
-        if self.runner.running:
-            self._toast("Stop the running job first", "warn")
-            return
-        mode = "light" if not theme.is_light() else "dark"
-        CONFIG.set("ui", "appearance", mode)
-        theme.apply(mode)
-        self._rebuild_ui()
-
     def _on_escape(self, _event=None) -> None:
         if self.attributes("-fullscreen"):
             self._toggle_fullscreen()
@@ -321,34 +257,6 @@ class NullTraceApp(ctk.CTk):
         self.attributes("-fullscreen", full)
         if hasattr(self, "full_button") and self.full_button.winfo_exists():
             self.full_button.configure(text="WINDOWED" if full else "FULLSCREEN")
-
-    def _rebuild_ui(self) -> None:
-        view, module_id = self.view, (self.current.id if self.current else None)
-        snapshot = list(self.current_lines)
-        status = self.output_status.cget("text") if self.output_status is not None else ""
-        for child in self.winfo_children():
-            child.destroy()
-        self._toast_widget = None
-        self._flush_job = None
-        self._pending = []
-        self._brand_image = None
-        self._build_shell()
-        self._render_nav(self.search_entry.get() if hasattr(self, "search_entry") else "")
-        if view == "module" and module_id:
-            self._select_module(module_id)
-            if snapshot:
-                self._clear_output()
-                for kind, text in snapshot:
-                    self._record(kind, text)
-                    self._emit_line(kind, text)
-                self._flush_pending()
-                self._set_output_status(status.replace("[ ", "").replace(" ]", "").lower())
-        elif view == "history":
-            self._show_history()
-        elif view == "settings":
-            self._show_settings()
-        else:
-            self._show_dashboard()
 
     # ------------------------------------------------------------------ nav
     def _render_nav(self, needle: str = "") -> None:
@@ -1332,9 +1240,8 @@ class NullTraceApp(ctk.CTk):
             "SIDEBAR — the Null-Trace mark, a filter (Ctrl+F), the red QUICK RECON button,",
             "then every module grouped by category. The list scrolls.",
             "",
-            "TOP BAR — DASHBOARD, HISTORY and SETTINGS move between views. The sun / crescent",
-            "switches between the black and white themes. FULLSCREEN (F11) hides the window",
-            "frame. The ? button opens this page.",
+            "TOP BAR — DASHBOARD, HISTORY and SETTINGS move between views. FULLSCREEN (F11)",
+            "hides the window frame. The ? button opens this page.",
         ])
 
         block("Quick Recon", [

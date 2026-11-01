@@ -6,10 +6,13 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.1.1", [
+        "Removed the white-mode switch and its palette; the interface is dark only.",
+        "Top bar now carries the views, fullscreen and the help page.",
+    ]),
     ("1.1.0", [
         "Quick Recon: one field for a domain, IP, email, phone, VIN, hash or "
         "username, auto-detected and swept with a findings summary.",
-        "White mode with black borders, a stored preference and a top-bar switch.",
         "Fullscreen toggle (F11, Escape to leave) and the workspace views moved "
         "into the top bar.",
         "Brighter text, framed module list and a cleaner wordmark on white.",

@@ -38,7 +38,7 @@ made directly from your machine.
 | Layer | Files | Responsibility |
 |---|---|---|
 | Interface | `nulltrace/gui/app.py` | Dashboard, quick recon, module forms, streaming output, settings, history, theme switch |
-| Theme | `nulltrace/theme.py` | Two palettes (terminal black / white), fonts, radii; `apply()` swaps them |
+| Theme | `nulltrace/theme.py` | Palette, fonts and radii in one place |
 | Job control | `nulltrace/job.py` | Module contract (`Module`, `Field`), `Context` output API, threaded `JobRunner`, cancellation |
 | Modules | `nulltrace/modules/*.py` | One file per tool; no GUI imports, no global state |
 | Orchestration | `nulltrace/modules/auto_recon.py` | Quick Recon: detects the target type and runs the matching modules through a forwarding context |
@@ -127,13 +127,6 @@ username) by shape, then `PLANS` maps each kind to the modules that make sense.
 A `SubContext` forwards every `ctx` call to the parent while counting rows,
 warnings and errors, so a failing step degrades into a line of output instead of
 aborting the sweep. The run ends with a findings table.
-
-## Theming
-
-`theme.apply(mode)` copies one palette into module globals and rebuilds
-`TAG_COLORS`. The app applies the stored preference before creating any widget;
-the top-bar switch flips the palette, persists it in `config.json` and rebuilds
-the shell, replaying the current output so a theme change never costs a result.
 
 ## Failure behaviour
 

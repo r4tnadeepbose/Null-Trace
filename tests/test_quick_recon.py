@@ -46,27 +46,24 @@ class DetectTests(unittest.TestCase):
 
 
 class ThemeTests(unittest.TestCase):
-    def tearDown(self) -> None:
-        theme.apply("dark")
-
-    def test_switch(self) -> None:
-        theme.apply("light")
-        self.assertTrue(theme.is_light())
-        self.assertEqual(theme.TEXT, "#000000")
-        self.assertEqual(theme.BORDER, "#000000")
-        theme.apply("dark")
-        self.assertFalse(theme.is_light())
+    def test_text_is_bright(self) -> None:
         self.assertEqual(theme.TEXT, "#ffffff")
+        self.assertEqual(theme.OUTPUT_TEXT, "#ffffff")
 
-    def test_unknown_mode_falls_back_to_dark(self) -> None:
-        theme.apply("sepia")
-        self.assertFalse(theme.is_light())
+    def test_single_accent(self) -> None:
+        for name in ("ACCENT", "LINK", "ERR"):
+            colour = getattr(theme, name)
+            self.assertTrue(colour.startswith("#") and len(colour) == 7, name)
 
-    def test_tag_colours_follow_mode(self) -> None:
-        theme.apply("light")
-        self.assertEqual(theme.TAG_COLORS["title"][0], "#000000")
-        theme.apply("dark")
+    def test_tag_colours_defined(self) -> None:
+        for tag in ("title", "section", "kv_label", "kv_value", "table_head"):
+            self.assertIn(tag, theme.TAG_COLORS)
         self.assertEqual(theme.TAG_COLORS["title"][0], "#ffffff")
+
+    def test_every_category_has_a_colour(self) -> None:
+        from nulltrace.modules import CATEGORY_ORDER
+        for category in CATEGORY_ORDER:
+            self.assertIn(category, theme.CATEGORY_COLORS)
 
 
 if __name__ == "__main__":
