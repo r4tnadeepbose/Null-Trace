@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import gc
+import os
 import platform
 import queue
 import shutil
 import sys
 import time
 import tkinter as tk
-import webbrowser
 from datetime import datetime, timedelta
 from pathlib import Path
 from tkinter import filedialog, messagebox
@@ -17,6 +17,7 @@ from tkinter import filedialog, messagebox
 import customtkinter as ctk
 
 from .. import theme
+from ..browser import open_url as open_browser_url
 from ..config import CONFIG, CONFIG_PATH, KEY_LABELS
 from ..history import add_scan, clear_history, delete_scan, list_scans, load_scan
 from ..modules.metadata import exiftool_path
@@ -189,7 +190,7 @@ class NullTraceApp(ctk.CTk):
         credit = ctk.CTkLabel(meta, text=f"by {AUTHOR}", font=theme.font(9),
                               text_color=theme.FAINT, anchor="w")
         credit.pack(fill="x")
-        credit.bind("<Button-1>", lambda _e: webbrowser.open(GITHUB))
+        credit.bind("<Button-1>", lambda _e: open_browser_url(GITHUB))
         credit.configure(cursor="hand2")
 
         right = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0)
@@ -873,9 +874,11 @@ class NullTraceApp(ctk.CTk):
                 config["spacing3"] = spacing[1]
             raw.tag_config(name, **config)
         raw.tag_config("link", foreground=theme.LINK, underline=True)
-        raw.tag_bind("link", "<Button-1>", self._open_link)
-        raw.tag_bind("link", "<Enter>", lambda _e: raw.configure(cursor="hand2"))
-        raw.tag_bind("link", "<Leave>", lambda _e: raw.configure(cursor=""))
+        raw.tag_config("link_url", foreground=theme.MUTED)
+        for tag in ("link", "link_url"):
+            raw.tag_bind(tag, "<Button-1>", self._open_link)
+            raw.tag_bind(tag, "<Enter>", lambda _e, w=raw: w.configure(cursor="hand2"))
+            raw.tag_bind(tag, "<Leave>", lambda _e, w=raw: w.configure(cursor=""))
         textbox._link_map = {}
 
     def _open_link(self, event) -> None:
@@ -888,7 +891,7 @@ class NullTraceApp(ctk.CTk):
         mapping = getattr(owner, "_link_map", {}) if owner is not None else {}
         url = mapping.get(line)
         if url:
-            webbrowser.open(url)
+            open_browser_url(url)
 
     # ------------------------------------------------------------------ forms
     def _build_form(self, module: Module) -> None:
@@ -1096,7 +1099,7 @@ class NullTraceApp(ctk.CTk):
             return
         raw = getattr(box, "_textbox", box)
         at_bottom = raw.yview()[1] >= 0.995
-        line = int(box.index("end-1c").split(".")[0]) + 1
+        line = int(box.index("end-1c").split(".")[0])
         box.configure(state="normal")
         for kind, text in batch:
             if kind == "kv":
@@ -1107,10 +1110,12 @@ class NullTraceApp(ctk.CTk):
                 line += 1
             elif kind == "link":
                 label, _, url = text.partition("\t")
-                box.insert("end", f"  {label}  {url}\n", "link")
+                box.insert("end", f"  {label.strip()}  ↗\n", "link")
+                box.insert("end", f"    {url}\n", "link_url")
                 if url:
                     box._link_map[line] = url
-                line += 1
+                    box._link_map[line + 1] = url
+                line += 2
             else:
                 box.insert("end", (text.upper() if kind == "title" else text) + "\n", kind)
                 line += 1
@@ -1319,6 +1324,7 @@ class NullTraceApp(ctk.CTk):
             ("timeout", "Request timeout (s)", str(CONFIG.timeout)),
             ("tor_proxy", "Tor SOCKS proxy", CONFIG.tor_proxy),
             ("user_agent", "User agent", CONFIG.user_agent),
+            ("browser", "Browser path (blank = Brave)", str(CONFIG.get("network", "browser", ""))),
         ):
             ctk.CTkLabel(card, text=label, width=150, anchor="w",
                          font=theme.font(11), text_color=theme.TEXT
@@ -1361,7 +1367,7 @@ class NullTraceApp(ctk.CTk):
                       corner_radius=theme.RADIUS, fg_color="transparent", border_width=1,
                       border_color=theme.BORDER, text_color=theme.MUTED,
                       hover_color=theme.ELEV,
-                      command=lambda: webbrowser.open(str(CONFIG_PATH.parent))
+                      command=lambda: os.startfile(str(CONFIG_PATH.parent))
                       ).grid(row=0, column=2, sticky="e")
 
     # ------------------------------------------------------------------ history
@@ -1442,7 +1448,7 @@ class NullTraceApp(ctk.CTk):
         block("Reading the output", [
             "RED HEADINGS     a section from the module",
             "GREY LABELS      the field name; the value next to it is the data",
-            "UNDERLINED RED   a link — click to open it in your browser",
+            "UNDERLINED RED   a link — click it and the URL below opens in Brave",
             "ALIGNED COLUMNS  tables; the rule separates the header",
             "",
             "The line beside OUTPUT shows the state: [ RUNNING · 2.1S ], then",
