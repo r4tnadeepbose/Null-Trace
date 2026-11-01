@@ -93,7 +93,7 @@ def _hibp(email: str, key: str) -> tuple[str, list[str]]:
     try:
         response = http(
             f"https://haveibeenpwned.com/api/v3/breachedaccount/{email}?truncateResponse=true",
-            headers={"hibp-api-key": key, "User-Agent": "NullTrace"},
+            headers={"hibp-api-key": key, "User-Agent": "Null-Trace"},
             allow_status=(404, 401, 403, 429), timeout=15,
         )
     except HttpError as exc:

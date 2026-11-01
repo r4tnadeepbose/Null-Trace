@@ -1,4 +1,4 @@
-"""NullTrace — open-source intelligence workstation."""
+"""Null-Trace — open-source intelligence workstation."""
 
 from .version import APP_NAME, TAGLINE, VERSION
 

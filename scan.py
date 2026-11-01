@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""NullTrace entry point.
+"""Null-Trace entry point.
 
     python scan.py                     launch the desktop application
     python scan.py --list              list every module
@@ -35,7 +35,7 @@ def _bootstrap() -> None:
     missing = _missing_packages()
     if not missing:
         return
-    print("NullTrace is missing required Python packages:", file=sys.stderr)
+    print("Null-Trace is missing required Python packages:", file=sys.stderr)
     for package in missing:
         print(f"  - {package}", file=sys.stderr)
     print("\nInstall them with:\n  python -m pip install -r requirements.txt", file=sys.stderr)
@@ -105,7 +105,7 @@ def _run_headless(module_id: str, assignments: list[str]) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="scan.py", description="NullTrace OSINT workbench")
+    parser = argparse.ArgumentParser(prog="scan.py", description="Null-Trace OSINT workbench")
     parser.add_argument("--list", action="store_true", help="list available modules")
     parser.add_argument("--run", metavar="MODULE", help="run a module without the GUI")
     parser.add_argument("-a", "--arg", action="append", default=[], metavar="KEY=VALUE",

@@ -1,1 +1,1 @@
-"""NullTrace desktop interface."""
+"""Null-Trace desktop interface."""

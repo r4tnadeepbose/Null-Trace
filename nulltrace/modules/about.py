@@ -20,7 +20,7 @@ def run(ctx) -> None:
     ctx.title(f"{APP_NAME} {VERSION}")
     ctx.muted(TAGLINE)
     ctx.section("About")
-    ctx.note("NullTrace is a workstation for open-source intelligence: it consolidates")
+    ctx.note("Null-Trace is a workstation for open-source intelligence: it consolidates")
     ctx.note("public records, DNS, certificates, metadata and breach exposure into one")
     ctx.note("interface. Every module runs locally; requests go straight from your")
     ctx.note("machine to the upstream source.")

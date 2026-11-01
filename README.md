@@ -1,4 +1,4 @@
-# NullTrace
+# Null-Trace
 
 Open-source intelligence workbench — a desktop application, written in Python, that
 consolidates the recon tools from the classic X-osint terminal framework into one
@@ -7,7 +7,7 @@ dark, local-first GUI.
 **Built by Ratnadeep Bose** · [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose)
 
 Everything runs on your machine. Scans go straight from your network to the upstream
-source; nothing is proxied through a NullTrace server, because there isn't one.
+source; nothing is proxied through a Null-Trace server, because there isn't one.
 
 ```
  python scan.py
@@ -29,7 +29,7 @@ source; nothing is proxied through a NullTrace server, because there isn't one.
 ### Windows (PowerShell)
 
 ```powershell
-cd C:\Users\boser\Downloads\X-osint-master\NullTrace
+cd C:\Users\boser\Downloads\NullTrace
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\python -m pip install -r requirements.txt
@@ -129,7 +129,7 @@ Every completed run is appended to local history (sqlite) and can be reopened la
 ## API keys
 
 All optional. Add them in **Settings**; they are stored at
-`%APPDATA%\NullTrace\config.json` (Linux/macOS: `~/.nulltrace/config.json`) and only
+`%APPDATA%\Null-Trace\config.json` (Linux/macOS: `~/.nulltrace/config.json`) and only
 ever sent to the provider that issued them.
 
 | Key | Unlocks | Free tier |
@@ -155,11 +155,11 @@ continue with the free sources.
 | `scan.py` | entry point (GUI and headless) |
 | `nulltrace/modules/` | one file per module |
 | `nulltrace/gui/` | application shell |
-| `%APPDATA%\NullTrace\config.json` | API keys and network settings |
-| `%APPDATA%\NullTrace\history.db` | sqlite scan history |
-| `%APPDATA%\NullTrace\wifi_qr.png` | last generated Wi-Fi QR code |
-| `%APPDATA%\NullTrace\rdap_dns.json` | cached IANA RDAP bootstrap |
-| `%APPDATA%\NullTrace\kev.json` | cached CISA KEV catalogue |
+| `%APPDATA%\Null-Trace\config.json` | API keys and network settings |
+| `%APPDATA%\Null-Trace\history.db` | sqlite scan history |
+| `%APPDATA%\Null-Trace\wifi_qr.png` | last generated Wi-Fi QR code |
+| `%APPDATA%\Null-Trace\rdap_dns.json` | cached IANA RDAP bootstrap |
+| `%APPDATA%\Null-Trace\kev.json` | cached CISA KEV catalogue |
 
 ## Troubleshooting
 
@@ -167,7 +167,7 @@ continue with the free sources.
 package. On Debian/Ubuntu: `sudo apt install python3-tk`. On Windows, re-run the
 python.org installer and keep the "tcl/tk" option.
 
-**`ModuleNotFoundError: readline`** — not used by NullTrace. That error comes from the
+**`ModuleNotFoundError: readline`** — not used by Null-Trace. That error comes from the
 old X-osint script.
 
 **SMTP module says "Could not connect on port 25"** — most consumer ISPs block
@@ -177,7 +177,7 @@ outbound 25. Run from a VPS or skip that module.
 HackerTarget usually still answers; wait a minute and retry.
 
 **Dark Web Search returns the Ahmia landing page** — Ahmia rotates an anti-bot token.
-NullTrace fetches the token first; if it still fails you are rate limited — wait.
+Null-Trace fetches the token first; if it still fails you are rate limited — wait.
 
 **Tor checkbox fails** — install `requests[socks]` and make sure the Tor service is
 listening on `127.0.0.1:9050` (Tor Browser: `tor.exe`). Adjust the proxy in Settings.
@@ -192,13 +192,13 @@ rate-limit or block SYN-less scans; that's their firewall, not a bug.
 
 **Ratnadeep Bose** (he/him) — [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose?tab=repositories)
 
-NullTrace is an independent Python rewrite inspired by the open-source TermuxHackz
+Null-Trace is an independent Python rewrite inspired by the open-source TermuxHackz
 X-osint tool. Third-party data providers are credited in **About → Credits** inside
 the application.
 
 ## Legal
 
-NullTrace is for **authorised** security testing, incident response, fraud
+Null-Trace is for **authorised** security testing, incident response, fraud
 investigation and research on public data. Running it against systems you do not own
 or have written permission to test may be a criminal offence. Breach and stealer data
 often contains personal information; handle it under your jurisdiction's privacy law

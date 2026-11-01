@@ -9,13 +9,28 @@ from pathlib import Path
 from typing import Any
 
 
+def _migrate_legacy(legacy: Path, path: Path) -> Path:
+    """Move the pre-rename data directory once, keeping keys and history."""
+    if path.exists() or not legacy.exists():
+        return path
+    try:
+        legacy.rename(path)
+        return path
+    except OSError:
+        # a running instance may hold the sqlite file; keep using the old folder
+        return legacy
+
+
 def data_dir() -> Path:
     base = os.environ.get("NULLTRACE_HOME")
     if base:
         path = Path(base)
     else:
         appdata = os.environ.get("APPDATA")
-        path = Path(appdata) / "NullTrace" if appdata else Path.home() / ".nulltrace"
+        if appdata:
+            path = _migrate_legacy(Path(appdata) / "NullTrace", Path(appdata) / "Null-Trace")
+        else:
+            path = _migrate_legacy(Path.home() / ".nulltrace", Path.home() / ".null-trace")
     path.mkdir(parents=True, exist_ok=True)
     return path
 

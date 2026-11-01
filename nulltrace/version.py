@@ -1,4 +1,4 @@
-APP_NAME = "NullTrace"
+APP_NAME = "Null-Trace"
 VERSION = "1.0.0"
 TAGLINE = "Open-source intelligence workbench"
 AUTHOR = "Ratnadeep Bose"

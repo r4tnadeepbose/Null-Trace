@@ -1,4 +1,4 @@
-"""NullTrace desktop application: dashboard shell, module views and local history."""
+"""Null-Trace desktop application: dashboard shell, module views and local history."""
 
 from __future__ import annotations
 

@@ -34,7 +34,7 @@ def _environment(ctx) -> None:
     ctx.kv("Python", f"{_version()} ({platform.architecture()[0]})")
     ctx.kv("Executable", sys.executable)
     ctx.kv("Platform", f"{platform.system()} {platform.release()}")
-    ctx.kv("NullTrace", VERSION)
+    ctx.kv("Null-Trace", VERSION)
     ctx.kv("Config file", CONFIG_PATH)
     ctx.kv("Data directory", data_dir())
 
@@ -96,7 +96,7 @@ def _install_exiftool(ctx) -> None:
     for line in tail.strip().splitlines()[-12:]:
         ctx.muted(f"  {line}")
     if result.returncode == 0 and shutil.which("exiftool"):
-        ctx.ok("ExifTool installed. Restart NullTrace so PATH is refreshed.")
+        ctx.ok("ExifTool installed. Restart Null-Trace so PATH is refreshed.")
     elif result.returncode == 0:
         ctx.ok("Install reported success — open a new terminal so PATH refreshes.")
     else:
