@@ -84,6 +84,40 @@ class NullTraceApp(ctk.CTk):
         self.after(200, self._poll_queue)
 
     # ------------------------------------------------------------------ shell
+    def _mode_icon(self, kind: str):
+        """Sun for dark mode, crescent for light mode.
+
+        Rendered from the system symbol font into a colour-matched image, which
+        keeps the glyph sharp and tinted without depending on Tk font fallbacks.
+        """
+        try:
+            from PIL import Image, ImageFont
+        except Exception:
+            return None
+        glyph = "\u2600" if kind == "sun" else "\u263e"
+        font = None
+        for candidate in (r"C:\Windows\Fonts\seguisym.ttf",
+                          r"C:\Windows\Fonts\segoeui.ttf",
+                          "DejaVuSans.ttf"):
+            try:
+                font = ImageFont.truetype(candidate, 44)
+                break
+            except Exception:
+                continue
+        if font is None:
+            return None
+        canvas = Image.new("RGBA", (72, 72), (0, 0, 0, 0))
+        from PIL import ImageDraw
+        ImageDraw.Draw(canvas).text((36, 36), glyph, font=font, anchor="mm",
+                                    fill=theme.ACCENT)
+        box = canvas.getbbox()
+        if box:
+            pad = 2
+            canvas = canvas.crop((max(0, box[0] - pad), max(0, box[1] - pad),
+                                  box[2] + pad, box[3] + pad))
+        canvas = canvas.resize((18, 18), Image.LANCZOS)
+        return ctk.CTkImage(light_image=canvas, dark_image=canvas, size=(18, 18))
+
     def _brand_photo(self):
         """Wordmark drawn with a soft red halo, like a tube that never quite focused."""
         try:
@@ -219,12 +253,15 @@ class NullTraceApp(ctk.CTk):
         ctk.CTkLabel(controls, text="|", text_color=theme.FAINT,
                      font=theme.font(11)).pack(side="left", padx=8)
 
+        self._mode_images = {
+            "sun": self._mode_icon("sun"),
+            "moon": self._mode_icon("moon"),
+        }
         self.theme_button = ctk.CTkButton(
-            controls, text="BLACK MODE" if theme.is_light() else "WHITE MODE",
-            height=28, width=112, corner_radius=theme.RADIUS,
+            controls, text="", image=self._mode_images["moon" if theme.is_light() else "sun"],
+            height=28, width=40, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
-            text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
-            command=self._toggle_theme)
+            hover_color=theme.ELEV, command=self._toggle_theme)
         self.theme_button.pack(side="left", padx=(0, 6))
 
         self.full_button = ctk.CTkButton(
