@@ -14,7 +14,9 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = Path(SPECPATH).parent
 
-datas = [(str(ROOT / "data"), "data")]
+datas = [(str(ROOT / "data"), "data"),
+         (str(ROOT / "assets" / "app.ico"), "assets"),
+         (str(ROOT / "assets" / "app.png"), "assets")]
 datas += collect_data_files("customtkinter")
 hiddenimports = collect_submodules("customtkinter") + [
     "dns.resolver",

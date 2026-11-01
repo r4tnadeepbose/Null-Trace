@@ -47,6 +47,7 @@ class FieldWidget:
 class NullTraceApp(ctk.CTk):
     def __init__(self) -> None:
         super().__init__(fg_color=theme.BG)
+        self._set_window_icon()
         self.title(f"{APP_NAME} — {TAGLINE}")
         self.geometry("1380x880")
         self.minsize(1160, 760)
@@ -263,6 +264,20 @@ class NullTraceApp(ctk.CTk):
         self.after(2800, dismiss)
 
     # ------------------------------------------------------------------ dashboard
+    # ------------------------------------------------------------------ dashboard
+    def _set_window_icon(self) -> None:
+        root = Path(__file__).resolve().parents[2]
+        ico, png = root / "assets" / "app.ico", root / "assets" / "app.png"
+        try:
+            if ico.exists():
+                self.iconbitmap(str(ico))
+                return
+            if png.exists():
+                from PIL import Image, ImageTk
+                self.iconphoto(True, ImageTk.PhotoImage(Image.open(png)))
+        except Exception:
+            pass
+
     def _show_dashboard(self) -> None:
         self.view = "dashboard"
         self.current = None
@@ -439,6 +454,29 @@ class NullTraceApp(ctk.CTk):
                          font=ctk.CTkFont("Segoe UI", 9),
                          text_color=theme.TEXT if ok else theme.MUTED).pack(side="left")
 
+        ctk.CTkLabel(right, text="COVERAGE", anchor="w",
+                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     text_color=theme.FAINT).pack(fill="x", padx=18, pady=(18, 6))
+        largest = max(len(items) for items in self.groups.values()) or 1
+        for category, items in self.groups.items():
+            row = ctk.CTkFrame(right, fg_color="transparent", height=20)
+            row.pack(fill="x", padx=18, pady=1)
+            ctk.CTkLabel(row, text=category, width=96, height=20, anchor="w",
+                         font=ctk.CTkFont("Segoe UI", 9),
+                         text_color=theme.MUTED).pack(side="left")
+            bar = ctk.CTkProgressBar(row, width=96, height=5, corner_radius=3,
+                                     progress_color=CATEGORY_COLORS.get(category, theme.ACCENT),
+                                     fg_color=theme.ELEV)
+            bar.set(len(items) / largest)
+            bar.pack(side="left", padx=(0, 8))
+            ctk.CTkLabel(row, text=str(len(items)), height=20, anchor="w",
+                         font=ctk.CTkFont("Consolas", 9),
+                         text_color=theme.TEXT).pack(side="left")
+        keyed = sum(1 for m in self.modules if m.keys)
+        ctk.CTkLabel(right, text=f"{keyed} modules accept an API key · {len(self.modules)} total",
+                     anchor="w", font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT
+                     ).pack(fill="x", padx=18, pady=(8, 0))
+
         ctk.CTkLabel(right, text=f"{CONFIG_PATH}\nhistory.db · kev.json · rdap_dns.json",
                      anchor="w", justify="left", wraplength=260,
                      font=ctk.CTkFont("Consolas", 9), text_color=theme.MUTED
@@ -545,7 +583,7 @@ class NullTraceApp(ctk.CTk):
 
         self.output = ctk.CTkTextbox(
             card, fg_color=theme.OUTPUT_BG, text_color=theme.OUTPUT_TEXT,
-            font=ctk.CTkFont("Consolas", 11), corner_radius=8, wrap="word",
+            font=ctk.CTkFont(*theme.OUTPUT_FONT), corner_radius=8, wrap="word",
             border_width=0, scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)
         self.output.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
@@ -558,6 +596,10 @@ class NullTraceApp(ctk.CTk):
             config = {"foreground": color}
             if font:
                 config["font"] = font
+            spacing = theme.TAG_SPACING.get(name)
+            if spacing:
+                config["spacing1"] = spacing[0]
+                config["spacing3"] = spacing[1]
             raw.tag_config(name, **config)
         raw.tag_config("link", foreground=theme.LINK, underline=True)
         raw.tag_bind("link", "<Button-1>", self._open_link)
@@ -745,23 +787,24 @@ class NullTraceApp(ctk.CTk):
         line = int(box.index("end-1c").split(".")[0]) + 1
         box.configure(state="normal")
         for kind, text in batch:
-            url = None
             if kind == "kv":
                 label, _, value = text.partition("\t")
-                pad = max(2, 24 - len(label))
-                payload, tag = f"{label}{' ' * pad}{value}", "kv"
+                pad = max(2, 26 - len(label))
+                box.insert("end", label + " " * pad, "kv_label")
+                box.insert("end", value + "\n", "kv_value")
+                line += 1
             elif kind == "link":
                 label, _, url = text.partition("\t")
-                payload, tag = f"  {label}  {url}", "link"
-            else:
-                payload, tag = text, kind
-            box.insert("end", payload + "\n", tag)
-            if url:
-                box._link_map[line] = url
-            line += 1
-            if kind == "section":
-                box.insert("end", "\n", "text")
+                box.insert("end", f"  {label}  {url}\n", "link")
+                if url:
+                    box._link_map[line] = url
                 line += 1
+            else:
+                box.insert("end", text + "\n", kind)
+                line += 1
+                if kind == "section":
+                    box.insert("end", "\n", "text")
+                    line += 1
         box.configure(state="disabled")
         if at_bottom:
             box.see("end")
@@ -824,8 +867,9 @@ class NullTraceApp(ctk.CTk):
                 messagebox.showwarning(APP_NAME, f"'{field.label}' is required.")
                 return
         self._clear_output()
-        self._emit_line("title", f"{self.current.title} — {datetime.now():%Y-%m-%d %H:%M:%S}")
-        self._record("title", f"{self.current.title} — {datetime.now():%Y-%m-%d %H:%M:%S}")
+        stamp = f"run started {datetime.now():%Y-%m-%d %H:%M:%S}"
+        self._emit_line("muted", stamp)
+        self._record("muted", stamp)
         self.run_button.configure(state="disabled", text="Running ...")
         self.stop_button.configure(state="normal")
         self.started = time.time()

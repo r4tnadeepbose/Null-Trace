@@ -5,6 +5,7 @@
 | `logo.svg` | square mark, 512×512 — repository avatar, About screen |
 | `banner.svg` | 1280×320 wordmark for the README and release pages |
 | `footer.svg` | 1200×220 dark responsibility card used at the end of the README |
+| `app.ico` / `app.png` | window and taskbar icon (16–256 px) |
 
 Both are hand-written SVG with no external fonts or embedded images, so they
 scale cleanly and render in GitHub's image proxy.

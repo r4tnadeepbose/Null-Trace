@@ -84,8 +84,9 @@ class Context:
         for row in body:
             for index, cell in enumerate(row[: len(widths)]):
                 widths[index] = max(widths[index], len(cell))
-        self._out("table", "  ".join(str(h).ljust(widths[i]) for i, h in enumerate(header)).rstrip())
-        self._out("table", "  ".join("-" * widths[i] for i in range(len(header))))
+        self._out("table_head",
+                  "  ".join(str(h).ljust(widths[i]) for i, h in enumerate(header)).rstrip())
+        self._out("table_rule", "  ".join("─" * widths[i] for i in range(len(header))))
         for row in body:
             cells = [row[i].ljust(widths[i]) if i < len(row) else "" for i in range(len(widths))]
             self._out("table", "  ".join(cells).rstrip())

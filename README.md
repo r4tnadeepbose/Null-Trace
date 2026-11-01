@@ -157,7 +157,7 @@ continue with the free sources.
 ```
 Null-Trace/
 ├── .github/      CI workflow, issue forms, security policy
-├── assets/       logo and banner (SVG)
+├── assets/       logo, banner, footer card and app icon
 ├── data/         wordlists and dork catalogue, editable without code changes
 ├── docs/         architecture, module reference, configuration, development
 ├── examples/     sample headers, config and exported output

@@ -38,9 +38,11 @@ class JobContextTests(unittest.TestCase):
     def test_table_alignment(self) -> None:
         context, events = self.make()
         context.table(("A", "Bee"), (("1", "two"), ("three", "4")))
+        kinds = [event.payload["kind"] for event in events]
         lines = [event.payload["text"] for event in events]
+        self.assertEqual(kinds[:2], ["table_head", "table_rule"])
         self.assertTrue(lines[0].startswith("A"))
-        self.assertTrue(set(lines[1]) <= {"-", " "})
+        self.assertTrue(set(lines[1]) <= {"─", " "})
         column = lines[0].index("Bee")
         self.assertEqual(lines[2].index("two"), column)
         self.assertEqual(lines[3].index("4"), column)
