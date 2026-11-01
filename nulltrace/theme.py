@@ -76,6 +76,7 @@ CATEGORY_COLORS = {
     "Network": TEXT,
     "Web": MUTED,
     "Identity": MUTED,
+    "Utility": MUTED,
     "Vulnerability": ACCENT,
     "Media": MUTED,
     "System": FAINT,

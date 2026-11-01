@@ -5,7 +5,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-7fa0c4.svg)](https://www.python.org/downloads/)
 
 Open-source intelligence workbench — a desktop application, written in Python, that
-consolidates 40 recon tools into one dark, local-first GUI.
+consolidates 48 recon tools into one dark, local-first GUI.
 
 **Built by Ratnadeep Bose** · [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose)
 
@@ -99,10 +99,16 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Network | BGP / ASN | AS holder, announced prefixes and upstreams (RIPE Stat) | — |
 | Network | IP Reputation | Six DNS blocklists, with the reason for each listing | — |
 | Network | Reverse IP | Domains sharing an address, from passive DNS | — |
+| Network | My Connection | Your egress IP, network owner and proxy signals | — |
 | Network | MAC Vendor | OUI lookup, randomised/multicast address detection | — |
 | Network | Network Map | Traceroute with city/ASN per hop | — |
 | Web | WHOIS / RDAP | Registrar, dates, statuses, nameservers, contacts (no key) | — |
 | Web | TLS Inspector | Subject, issuer, SANs, expiry countdown, chain verification | — |
+| Web | TLS Versions | Each protocol version negotiated in turn; flags deprecated ones | — |
+| Web | Takeover Check | Follows CNAMEs into services that can be reclaimed | — |
+| Web | CORS Check | Foreign Origin test, credential reflection, preflight | — |
+| Web | Cookie Audit | Secure, HttpOnly, SameSite and lifetime per cookie | — |
+| Web | Bulk URLs | Many URLs at once: status, latency, title | — |
 | Web | Wayback | Archived snapshots from the Internet Archive CDX index | — |
 | Web | Site Files | robots.txt, sitemap, security.txt, ads.txt parsed | — |
 | Web | URL Inspector | Redirect chains, short-link expansion, phishing signals | — |
@@ -120,6 +126,8 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Identity | Infostealer Exposure | Hudson Rock Cavalier malware-log lookups | — |
 | Identity | GitHub Recon | Profile, repos, activity, commit emails | optional |
 | Identity | SMTP Analysis | Live banner, ESMTP features, STARTTLS, one RCPT probe | — |
+| Utility | JWT Inspector | Decode header/claims, flag alg=none and long lifetimes | — |
+| Utility | Hash Identifier | Guess the algorithm from a digest's shape | — |
 | Vulnerability | CVE / Exploits | NVD search + CISA KEV flagging | — |
 | Media | Metadata | EXIF/XMP/document tags, GPS extraction | — |
 | Media | Hash Lookup | MD5/SHA1/SHA256, file-type heuristics, VirusTotal | VirusTotal |

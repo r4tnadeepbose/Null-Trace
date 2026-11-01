@@ -1,6 +1,6 @@
 # Module reference
 
-Generated from `nulltrace/modules/__init__.py` — 40 modules.
+Generated from `nulltrace/modules/__init__.py` — 48 modules.
 
 | Module | ID | Category | Inputs | API key |
 |---|---|---|---|---|
@@ -15,11 +15,17 @@ Generated from `nulltrace/modules/__init__.py` — 40 modules.
 | **MAC Vendor** | `mac_lookup` | Network | macs* (multiline) | — |
 | **Reverse IP** | `reverse_ip` | Network | ip* | — |
 | **Network Map** | `netmap` | Network | host*, hops, geo (checkbox) | — |
+| **My Connection** | `my_connection` | Network | — | — |
 | **WHOIS / RDAP** | `whois_rdap` | Web | target* | — |
 | **TLS Inspector** | `tls_inspector` | Web | host*, port | — |
+| **TLS Versions** | `tls_versions` | Web | host*, port | — |
 | **Wayback** | `wayback` | Web | target*, limit | — |
 | **URL Inspector** | `url_inspector` | Web | url* | — |
+| **Takeover Check** | `subdomain_takeover` | Web | host* | — |
 | **Site Files** | `site_files` | Web | target* | — |
+| **CORS Check** | `cors_check` | Web | url*, origin | — |
+| **Cookie Audit** | `cookie_audit` | Web | url* | — |
+| **Bulk URLs** | `bulk_urls` | Web | urls* (multiline) | — |
 | **Host Search** | `host_search` | Web | target*, tls (checkbox) | — |
 | **Subdomains** | `subdomains` | Web | domain*, resolve (checkbox), brute (checkbox) | — |
 | **Google Dorks** | `dorks` | Web | domain*, terms, category (choice), engine (choice), limit | — |
@@ -34,6 +40,8 @@ Generated from `nulltrace/modules/__init__.py` — 40 modules.
 | **SMTP Analysis** | `smtp` | Identity | domain*, recipient, starttls (checkbox) | — |
 | **Infostealer Exposure** | `infostealer` | Identity | mode (choice), query* | — |
 | **GitHub Recon** | `github` | Identity | mode (choice), target* | github |
+| **JWT Inspector** | `jwt_inspector` | Utility | token* (multiline) | — |
+| **Hash Identifier** | `hash_identify` | Utility | hash* | — |
 | **CVE / Exploits** | `cve_research` | Vulnerability | query*, severity (choice), limit | — |
 | **Metadata** | `metadata` | Media | path* (file) | — |
 | **Hash Lookup** | `hash_lookup` | Media | value* (file) | virustotal |
@@ -93,6 +101,10 @@ Domains hosted on the same address, from a passive reverse-IP index.
 
 Traceroute to a target with city/country/ASN lookup for every responding hop.
 
+### My Connection (`my_connection`)
+
+Your public address, network owner, reverse DNS and whether a proxy is in front.
+
 ### WHOIS / RDAP (`whois_rdap`)
 
 Domain or IP registration data: registrar, dates, statuses, nameservers and contacts.
@@ -100,6 +112,10 @@ Domain or IP registration data: registrar, dates, statuses, nameservers and cont
 ### TLS Inspector (`tls_inspector`)
 
 Certificate subject, issuer, SANs, expiry countdown and whether the chain verifies.
+
+### TLS Versions (`tls_versions`)
+
+Negotiate each TLS version in turn and flag deprecated protocols or weak ciphers.
 
 ### Wayback (`wayback`)
 
@@ -109,9 +125,25 @@ Archived snapshots of a URL or domain from the Internet Archive CDX index.
 
 Expand short links, follow the redirect chain, and flag homograph or phishing patterns.
 
+### Takeover Check (`subdomain_takeover`)
+
+Follow CNAMEs into known services and look for the 'this host is gone' page.
+
 ### Site Files (`site_files`)
 
 robots.txt, sitemap.xml, security.txt, humans.txt and ads.txt, parsed into a summary.
+
+### CORS Check (`cors_check`)
+
+Send a foreign Origin and report whether the endpoint reflects it or allows credentials.
+
+### Cookie Audit (`cookie_audit`)
+
+Parse Set-Cookie headers and flag missing Secure, HttpOnly, SameSite or bad lifetimes.
+
+### Bulk URLs (`bulk_urls`)
+
+Fetch many URLs concurrently and report status, latency and page title.
 
 ### Host Search (`host_search`)
 
@@ -168,6 +200,14 @@ Check whether an email, username or domain appears in infostealer malware logs (
 ### GitHub Recon (`github`)
 
 Profile and repository intel, recent activity, and commit-history email discovery.
+
+### JWT Inspector (`jwt_inspector`)
+
+Decode a JSON Web Token locally, list claims and flag alg=none, weak algorithms and long lifetimes.
+
+### Hash Identifier (`hash_identify`)
+
+Name the likely algorithm from a digest's shape, with a warning for weak and short hashes.
 
 ### CVE / Exploits (`cve_research`)
 

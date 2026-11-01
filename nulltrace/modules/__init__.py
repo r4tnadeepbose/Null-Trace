@@ -7,6 +7,9 @@ from . import (
     about,
     auto_recon,
     bgp_asn,
+    bulk_urls,
+    cookie_audit,
+    cors_check,
     cve,
     darkweb,
     dns_propagation,
@@ -18,13 +21,16 @@ from . import (
     exposure_audit,
     file_triage,
     github,
+    hash_identify,
     hash_lookup,
     host_search,
     image_search,
     infostealer,
     ip_info,
+    jwt_inspector,
     mac_lookup,
     metadata,
+    my_connection,
     netmap,
     dnsbl,
     news,
@@ -35,7 +41,9 @@ from . import (
     smtp,
     speedtest,
     subdomains,
+    subdomain_takeover,
     tls_inspector,
+    tls_versions,
     tools,
     url_inspector,
     username_scan,
@@ -45,7 +53,8 @@ from . import (
     wifi,
 )
 
-CATEGORY_ORDER = ("Recon", "Network", "Web", "Identity", "Vulnerability", "Media", "System")
+CATEGORY_ORDER = ("Recon", "Network", "Web", "Identity", "Utility", "Vulnerability",
+                  "Media", "System")
 
 
 def all_modules() -> list[Module]:
@@ -63,12 +72,18 @@ def all_modules() -> list[Module]:
         dnsbl.MODULE,
         reverse_ip.MODULE,
         netmap.MODULE,
+        my_connection.MODULE,
         # web
         whois_rdap.MODULE,
+        tls_versions.MODULE,
         tls_inspector.MODULE,
         wayback.MODULE,
         url_inspector.MODULE,
         site_files.MODULE,
+        subdomain_takeover.MODULE,
+        cors_check.MODULE,
+        cookie_audit.MODULE,
+        bulk_urls.MODULE,
         host_search.MODULE,
         subdomains.MODULE,
         dorks.MODULE,
@@ -84,6 +99,9 @@ def all_modules() -> list[Module]:
         smtp.MODULE,
         infostealer.MODULE,
         github.MODULE,
+        # utility
+        jwt_inspector.MODULE,
+        hash_identify.MODULE,
         # vulnerability
         cve.MODULE,
         # media
