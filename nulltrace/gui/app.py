@@ -540,7 +540,7 @@ class NullTraceApp(ctk.CTk):
                           ).pack(side="left", padx=(6, 0))
 
         self.output = ctk.CTkTextbox(
-            card, fg_color=theme.BG, text_color=theme.TEXT,
+            card, fg_color=theme.OUTPUT_BG, text_color=theme.OUTPUT_TEXT,
             font=ctk.CTkFont("Consolas", 11), corner_radius=8, wrap="word",
             border_width=0, scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)

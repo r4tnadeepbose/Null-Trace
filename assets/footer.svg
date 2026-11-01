@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" width="1200" height="220" role="img" aria-label="Use Null-Trace responsibly">
+  <rect width="1200" height="220" fill="#0c0e13"/>
+  <rect x="0.5" y="0.5" width="1199" height="219" fill="none" stroke="#242a34"/>
+  <rect x="0" y="0" width="1200" height="3" fill="#7fa0c4"/>
+
+  <g transform="translate(56 74)">
+    <circle cx="36" cy="36" r="34" fill="none" stroke="#2d333f" stroke-width="2"/>
+    <path d="M14 52 L30 34 L42 44 L62 20" fill="none" stroke="#93b4d6" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="62" cy="20" r="6" fill="none" stroke="#93b4d6" stroke-width="3"/>
+  </g>
+
+  <text x="152" y="92" font-family="Segoe UI, Arial, sans-serif" font-size="30"
+        font-weight="700" fill="#f0ece3">Use it responsibly</text>
+  <text x="152" y="130" font-family="Segoe UI, Arial, sans-serif" font-size="19"
+        fill="#cfcac0">You are solely responsible for how you use this tool,</text>
+  <text x="152" y="158" font-family="Segoe UI, Arial, sans-serif" font-size="19"
+        fill="#cfcac0">and for complying with the law where you live.</text>
+
+  <text x="1144" y="196" text-anchor="end" font-family="Segoe UI, Arial, sans-serif"
+        font-size="15" fill="#8b93a1">MIT © 2026 Ratnadeep Bose · github.com/r4tnadeepbose</text>
+</svg>

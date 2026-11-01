@@ -11,6 +11,8 @@ BORDER = "#2d333f"
 BORDER_SOFT = "#242a34"
 
 TEXT = "#e7e2d8"      # parchment
+OUTPUT_BG = "#0c0f14"  # darker well behind scan output
+OUTPUT_TEXT = "#f0ece3"  # higher contrast for dense monospace text
 MUTED = "#9ba2af"
 FAINT = "#6b7280"
 ACCENT = "#7fa0c4"     # muted blue

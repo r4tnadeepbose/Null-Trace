@@ -233,15 +233,23 @@ the application.
 
 ## Legal
 
-Null-Trace is for **authorised** security testing, incident response, fraud
-investigation and research on public data. Running it against systems you do not own
-or have written permission to test may be a criminal offence. Breach and stealer data
-often contains personal information; handle it under your jurisdiction's privacy law
-(GDPR, DPDP, CCPA, …). A finding is evidence of exposure — not proof of wrongdoing.
+**Use it only where you are allowed to.** Null-Trace targets public data and systems
+you own or are contracted to test.
 
-You are solely responsible for how you use this. See
-[legal/DISCLAIMER.md](legal/DISCLAIMER.md), [legal/PRIVACY.md](legal/PRIVACY.md) and
-[legal/THIRD_PARTY.md](legal/THIRD_PARTY.md).
+| Allowed | Not allowed |
+|---|---|
+| Your own hosts, domains, accounts and devices | Systems you do not own and have no permission to test |
+| Authorised penetration tests and incident response | Profiling private people, their family or their contact details |
+| Research on public figures and public organisations | Harassment, stalking, doxxing, credential theft |
+| Exposure checks on identifiers you own | Bypassing authentication or access controls |
+
+Breach and stealer data contains personal information. Handling it is regulated
+(GDPR, DPDP Act 2023, CCPA). A finding is evidence of exposure — not proof of
+wrongdoing, and not permission to use it.
+
+**You are solely responsible for your use of this tool and for complying with the
+law in your jurisdiction.** Full terms: [legal/DISCLAIMER.md](legal/DISCLAIMER.md),
+[legal/PRIVACY.md](legal/PRIVACY.md), [legal/THIRD_PARTY.md](legal/THIRD_PARTY.md).
 
 ## License
 
@@ -249,4 +257,15 @@ MIT © 2026 Ratnadeep Bose — see [LICENSE](LICENSE).
 
 You may use, modify and redistribute it, including commercially, provided the
 copyright notice and licence text stay with the software. It comes with no warranty.
+
+---
+
+<div align="center">
+  <img src="assets/footer.svg" alt="Use it responsibly — you are solely responsible for how you use this tool and for complying with the law where you live" width="100%">
+</div>
+
+<p align="center">
+  <sub><strong>You are solely responsible</strong> for how you use Null-Trace. Investigate only what you are authorised to investigate.</sub>
+</p>
+
 
