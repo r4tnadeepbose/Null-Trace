@@ -24,9 +24,9 @@ Dashboard — run counters, quick start, recent runs, the module browser and env
 
 ![Dashboard](docs/screenshots/01-dashboard.png)
 
-| Quick Recon — one target, matching modules, findings summary | Port Scan — open ports, banners and passive cross-check |
+| Quick Recon — one target, matching modules, findings summary | IP Intel — geolocation, reverse DNS and a clickable map link |
 |---|---|
-| ![Quick Recon](docs/screenshots/02-quick-recon.png) | ![Port Scan](docs/screenshots/03-scan-output.png) |
+| ![Quick Recon](docs/screenshots/02-quick-recon.png) | ![IP Intel](docs/screenshots/03-scan-output.png) |
 
 | History — every run stored locally, filterable and replayable | How it works — the built-in walkthrough behind the `?` button |
 |---|---|
