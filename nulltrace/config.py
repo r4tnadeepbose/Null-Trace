@@ -59,7 +59,7 @@ DEFAULTS: dict[str, Any] = {
             "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         ),
     },
-    "ui": {"keep_history": True},
+    "ui": {"keep_history": True, "font_scale": 1.15},
 }
 
 

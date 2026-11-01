@@ -130,8 +130,10 @@ domain, IP, email, phone, VIN, hash or username, and the matching modules run in
 sequence with a findings summary at the end.
 
 **Window chrome**: the top bar carries the workspace views (Dashboard, History,
-Settings), a `?` button that opens a walkthrough of every part of the app, and a
-fullscreen toggle (`F11`, `Escape` to leave). The interface is dark only.
+Settings), `A-` / `A+` buttons that scale every font between 100% and 140%
+(remembered between launches), a `?` button that opens a walkthrough of every
+part of the app, and a fullscreen toggle (`F11`, `Escape` to leave). The
+interface is dark only.
 
 Press **Run scan** (or `Ctrl+Enter`). Results stream into the output pane; click any
 underlined link to open it in your browser. `Ctrl+S` exports the current output to a

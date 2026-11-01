@@ -6,6 +6,11 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.1.2", [
+        "Interface text is larger by default (115%) with A- / A+ controls to scale",
+        "every font between 100% and 140%; the choice is stored in the config.",
+        "Dashboard scrolls as a page so scaled text never clips.",
+    ]),
     ("1.1.1", [
         "Removed the white-mode switch and its palette; the interface is dark only.",
         "Top bar now carries the views, fullscreen and the help page.",

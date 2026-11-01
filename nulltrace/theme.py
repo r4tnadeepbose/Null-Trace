@@ -37,12 +37,30 @@ UI_FAMILY = "Consolas"
 MONO_FAMILY = "Consolas"
 
 
+# 1.0 is the original sizing; the app starts slightly larger than that.
+SCALE = 1.15
+SCALE_MIN = 1.0
+SCALE_MAX = 1.4
+SCALE_STEP = 0.1
+
+
+def px(value: float) -> int:
+    """Scale a pixel dimension alongside the fonts."""
+    return int(round(value * SCALE))
+
+
+def _px(size: float) -> int:
+    return max(7, round(size * SCALE))
+
+
 def font(size: int, weight: str | None = None) -> tuple:
-    return (UI_FAMILY, size, weight) if weight else (UI_FAMILY, size)
+    px = _px(size)
+    return (UI_FAMILY, px, weight) if weight else (UI_FAMILY, px)
 
 
 def mono(size: int, weight: str | None = None) -> tuple:
-    return (MONO_FAMILY, size, weight) if weight else (MONO_FAMILY, size)
+    px = _px(size)
+    return (MONO_FAMILY, px, weight) if weight else (MONO_FAMILY, px)
 
 
 OUTPUT_FONT = mono(12)
@@ -99,3 +117,22 @@ TAG_SPACING = {
     "table_head": (6, 1),
     "table_rule": (0, 3),
 }
+
+
+def set_scale(value: float) -> float:
+    """Resize every font. Call before building widgets, then rebuild the UI."""
+    global SCALE, OUTPUT_FONT, OUTPUT_FONT_TITLE, OUTPUT_FONT_BOLD
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        value = 1.15
+    SCALE = min(SCALE_MAX, max(SCALE_MIN, round(value, 2)))
+    OUTPUT_FONT = mono(12)
+    OUTPUT_FONT_TITLE = mono(14, "bold")
+    OUTPUT_FONT_BOLD = mono(12, "bold")
+    TAG_COLORS.update({
+        "title": (TEXT, OUTPUT_FONT_TITLE),
+        "section": (ACCENT, OUTPUT_FONT_BOLD),
+        "table_head": (ACCENT, None),
+    })
+    return SCALE

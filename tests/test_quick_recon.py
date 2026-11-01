@@ -55,6 +55,19 @@ class ThemeTests(unittest.TestCase):
             colour = getattr(theme, name)
             self.assertTrue(colour.startswith("#") and len(colour) == 7, name)
 
+    def test_scale_changes_font_size(self) -> None:
+        theme.set_scale(1.0)
+        small = theme.font(10)[1]
+        theme.set_scale(1.4)
+        large = theme.font(10)[1]
+        self.assertGreater(large, small)
+        theme.set_scale(1.15)
+
+    def test_scale_is_clamped(self) -> None:
+        self.assertEqual(theme.set_scale(9), theme.SCALE_MAX)
+        self.assertEqual(theme.set_scale(0.1), theme.SCALE_MIN)
+        theme.set_scale(1.15)
+
     def test_tag_colours_defined(self) -> None:
         for tag in ("title", "section", "kv_label", "kv_value", "table_head"):
             self.assertIn(tag, theme.TAG_COLORS)
