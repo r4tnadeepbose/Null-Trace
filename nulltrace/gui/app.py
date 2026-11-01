@@ -132,6 +132,9 @@ class NullTraceApp(ctk.CTk):
         sidebar.grid_rowconfigure(3, weight=1)
         sidebar.grid_columnconfigure(0, weight=1)
 
+        ctk.CTkFrame(self, width=1, fg_color=theme.BORDER).grid(
+            row=0, column=0, sticky="nse", pady=0)
+
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
         brand.grid(row=0, column=0, sticky="ew", padx=20, pady=(18, 6))
         self._brand_image = self._brand_photo()
@@ -165,7 +168,7 @@ class NullTraceApp(ctk.CTk):
 
         self.nav_scroll = ctk.CTkScrollableFrame(
             sidebar, fg_color="transparent", corner_radius=theme.RADIUS,
-            border_width=1, border_color=theme.BORDER_SOFT,
+            border_width=1, border_color=theme.BORDER,
             scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)
         self.nav_scroll.grid(row=3, column=0, sticky="nsew", padx=(10, 10), pady=(0, 6))
@@ -204,7 +207,7 @@ class NullTraceApp(ctk.CTk):
         for label, target in (("DASHBOARD", "dashboard"), ("HISTORY", "history"),
                               ("SETTINGS", "settings")):
             button = ctk.CTkButton(
-                controls, text=label, height=28, width=88, corner_radius=theme.RADIUS,
+                controls, text=label, height=30, width=88, corner_radius=theme.RADIUS,
                 fg_color="transparent", hover_color=theme.ELEV, text_color=theme.MUTED,
                 font=theme.font(10, "bold"),
                 command=lambda t=target: self._navigate(t))
@@ -225,7 +228,7 @@ class NullTraceApp(ctk.CTk):
                      font=theme.font(11)).pack(side="left", padx=(2, 8))
 
         self.full_button = ctk.CTkButton(
-            controls, text="FULLSCREEN", height=28, width=104, corner_radius=theme.RADIUS,
+            controls, text="FULLSCREEN", height=30, width=104, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
             text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
             command=self._toggle_fullscreen)
@@ -237,6 +240,9 @@ class NullTraceApp(ctk.CTk):
             text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(13, "bold"),
             command=self._show_help)
         self.help_button.pack(side="left")
+
+        ctk.CTkFrame(right, height=1, fg_color=theme.BORDER).grid(
+            row=0, column=0, sticky="sew", padx=26, pady=(6, 0))
 
         self.body = ctk.CTkFrame(right, fg_color=theme.BG, corner_radius=0)
         self.body.grid(row=1, column=0, sticky="nsew")
@@ -405,7 +411,7 @@ class NullTraceApp(ctk.CTk):
 
     def _card(self, parent, **kwargs) -> ctk.CTkFrame:
         return ctk.CTkFrame(parent, fg_color=theme.PANEL, corner_radius=theme.RADIUS,
-                            border_width=1, border_color=theme.BORDER_SOFT, **kwargs)
+                            border_width=1, border_color=theme.BORDER, **kwargs)
 
     def _toast(self, text: str, kind: str = "ok") -> None:
         if self._toast_widget is not None:
@@ -488,7 +494,7 @@ class NullTraceApp(ctk.CTk):
             ("Total runs", str(len(records)), "stored locally", theme.ACCENT),
             ("Last 7 days", str(recent_week), "scans", theme.OK),
             ("API keys", f"{keys_set}/{len(KEY_LABELS)}", "configured", theme.WARN),
-            ("Modules", str(len(self.modules)), "across 6 categories", theme.TEXT),
+            ("Modules", str(len(self.modules)), f"across {len(self.groups)} categories", theme.TEXT),
         )):
             card = self._card(stats)
             card.grid(row=0, column=column, sticky="ew", padx=(0 if column == 0 else 8, 0))
@@ -529,6 +535,7 @@ class NullTraceApp(ctk.CTk):
             ctk.CTkButton(
                 quick, text=module.title.upper(), height=34, corner_radius=theme.RADIUS,
                 fg_color=theme.ELEV, hover_color=theme.ELEV_HOVER, text_color=theme.TEXT,
+                border_width=1, border_color=theme.BORDER,
                 font=theme.font(11), anchor="w",
                 command=lambda m=module: self._select_module(m.id)
             ).grid(row=index // 3, column=index % 3, sticky="ew", padx=4, pady=4)
@@ -591,7 +598,8 @@ class NullTraceApp(ctk.CTk):
             cell.grid(row=index // 2, column=index % 2, sticky="ew", padx=4, pady=1)
             ctk.CTkLabel(cell, text=category, width=theme.px(90), anchor="w",
                          font=theme.font(9), text_color=theme.MUTED).pack(side="left")
-            bar = ctk.CTkProgressBar(cell, width=theme.px(60), height=4, corner_radius=0,
+            bar = ctk.CTkProgressBar(cell, width=theme.px(60), height=5, corner_radius=0,
+                                     border_width=1, border_color=theme.BORDER,
                                      progress_color=CATEGORY_COLORS.get(category, theme.ACCENT),
                                      fg_color=theme.ELEV)
             bar.set(len(items) / largest)
@@ -940,6 +948,7 @@ class NullTraceApp(ctk.CTk):
         for label in ("DOMAIN", "IP", "EMAIL", "PHONE", "VIN", "HASH", "USERNAME"):
             ctk.CTkLabel(chips, text=label, font=theme.font(9), text_color=theme.MUTED,
                          fg_color=theme.ELEV, corner_radius=theme.RADIUS_SMALL,
+                         border_width=1, border_color=theme.BORDER,
                          padx=8, pady=2).pack(side="left", padx=(0, 6))
 
         ctk.CTkLabel(self.form,
@@ -1479,7 +1488,7 @@ class NullTraceApp(ctk.CTk):
                 return
             for index, record in enumerate(matches):
                 row_card = ctk.CTkFrame(scroll, fg_color=theme.PANEL, corner_radius=theme.RADIUS,
-                                        border_width=1, border_color=theme.BORDER_SOFT)
+                                        border_width=1, border_color=theme.BORDER)
                 row_card.grid(row=index, column=0, sticky="ew", pady=2)
                 row_card.grid_columnconfigure(1, weight=1)
                 ctk.CTkLabel(row_card, text=record["started"].replace("T", " ")[5:16],

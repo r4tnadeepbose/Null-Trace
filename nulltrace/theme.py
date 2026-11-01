@@ -11,8 +11,8 @@ PANEL = "#0d0d0f"
 CARD = "#101012"
 ELEV = "#17171b"
 ELEV_HOVER = "#232329"
-BORDER = "#9a2f34"
-BORDER_SOFT = "#5f2024"
+BORDER = "#a8333a"        # every visible edge
+BORDER_SOFT = "#6b2226"   # hairline separators only
 
 TEXT = "#ffffff"
 MUTED = "#d4d2ce"
