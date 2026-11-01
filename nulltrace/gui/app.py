@@ -80,6 +80,7 @@ class NullTraceApp(ctk.CTk):
         self.bind("<Control-s>", lambda _e: self._export())
         self.bind("<Control-f>", lambda _e: self.search_entry.focus_set())
         self.bind("<F11>", lambda _e: self._toggle_fullscreen())
+        self.bind("<Escape>", self._on_escape)
         self.after(200, self._poll_queue)
 
     # ------------------------------------------------------------------ shell
@@ -257,6 +258,12 @@ class NullTraceApp(ctk.CTk):
         CONFIG.set("ui", "appearance", mode)
         theme.apply(mode)
         self._rebuild_ui()
+
+    def _on_escape(self, _event=None) -> None:
+        if self.attributes("-fullscreen"):
+            self._toggle_fullscreen()
+            return "break"
+        return None
 
     def _toggle_fullscreen(self) -> None:
         full = not bool(self.attributes("-fullscreen"))
