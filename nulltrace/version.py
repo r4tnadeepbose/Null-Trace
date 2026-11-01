@@ -1,0 +1,5 @@
+APP_NAME = "NullTrace"
+VERSION = "1.0.0"
+TAGLINE = "Open-source intelligence workbench"
+AUTHOR = "Ratnadeep Bose"
+GITHUB = "https://github.com/r4tnadeepbose"

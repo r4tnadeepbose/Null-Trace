@@ -1,0 +1,10 @@
+requests
+dnspython
+customtkinter
+Pillow
+phonenumbers
+piexif
+qrcode
+beautifulsoup4
+speedtest-cli
+requests[socks]
