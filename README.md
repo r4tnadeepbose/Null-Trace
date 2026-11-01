@@ -88,7 +88,10 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Network | DNS Lookup | A/AAAA/MX/TXT/NS/CNAME/SOA/CAA/SRV, subdomain probe | — |
 | Network | DNS Reverse | PTR records for an IP | — |
 | Network | Port Scan | Threaded TCP scan, banners, Shodan InternetDB cross-check | — |
+| Network | MAC Vendor | OUI lookup, randomised/multicast address detection | — |
 | Network | Network Map | Traceroute with city/ASN per hop | — |
+| Web | WHOIS / RDAP | Registrar, dates, statuses, nameservers, contacts (no key) | — |
+| Web | URL Inspector | Redirect chains, short-link expansion, phishing signals | — |
 | Web | Host Search | Headers, TLS cert, tech fingerprints, exposed paths | — |
 | Web | Subdomains | crt.sh, HackerTarget, optional brute force | — |
 | Web | Google Dorks | Curated dork catalogue with engine links | — |
@@ -96,18 +99,26 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Web | News | NewsAPI or Google News RSS | optional |
 | Identity | Email Intel | MX, SPF/DMARC, Gravatar, ProtonMail keys, breaches | HIBP |
 | Identity | Email Finder | Hunter.io search + pattern candidates + SMTP probes | Hunter |
+| Identity | Exposure Audit | Self-audit: breaches, stealers, mail posture, risk score | HIBP |
+| Identity | Email Headers | Hop chain, SPF/DKIM/DMARC parsing, spoofing verdict | — |
+| Identity | Username Scan | Handle presence across 17 public platforms | — |
 | Identity | Phone Intel | Validity, carrier, region, timezone, fraud score | Numverify/IPQS |
 | Identity | Infostealer Exposure | Hudson Rock Cavalier malware-log lookups | — |
 | Identity | GitHub Recon | Profile, repos, activity, commit emails | optional |
 | Identity | SMTP Analysis | Live banner, ESMTP features, STARTTLS, one RCPT probe | — |
 | Vulnerability | CVE / Exploits | NVD search + CISA KEV flagging | — |
 | Media | Metadata | EXIF/XMP/document tags, GPS extraction | — |
+| Media | Hash Lookup | MD5/SHA1/SHA256, file-type heuristics, VirusTotal | VirusTotal |
 | Media | Image Search | Hashes, Google Lens/Yandex/TinEye links, Google CSE | CSE |
 | Media | VIN Decoder | NHTSA vPIC decode + check-digit validation | — |
 | System | Wi-Fi | Nearby networks, saved profiles, password + QR | — |
 | System | Speed Test | Latency, download, upload | — |
 | System | Toolkit | Environment check, install ExifTool, update check | — |
 | System | About | Version, changelog, principles | — |
+
+The app opens on a **dashboard**: run counters, quick-start tiles, recent scans, a
+searchable list of every module, environment status and key coverage. The sidebar
+filter (`Ctrl+F`) narrows the module list as you type.
 
 Press **Run scan** (or `Ctrl+Enter`). Results stream into the output pane; click any
 underlined link to open it in your browser. `Ctrl+S` exports the current output to a
@@ -132,6 +143,7 @@ ever sent to the provider that issued them.
 | OpenCage | Reverse geocoding | 2,500/day |
 | GitHub token | 5,000 req/h instead of 60 | free |
 | Shodan | Optional; InternetDB already free | paid |
+| VirusTotal | File-hash reputation in Hash Lookup | free tier |
 
 Modules that need a key you have not set still run — they print what is skipped and
 continue with the free sources.
@@ -146,6 +158,8 @@ continue with the free sources.
 | `%APPDATA%\NullTrace\config.json` | API keys and network settings |
 | `%APPDATA%\NullTrace\history.db` | sqlite scan history |
 | `%APPDATA%\NullTrace\wifi_qr.png` | last generated Wi-Fi QR code |
+| `%APPDATA%\NullTrace\rdap_dns.json` | cached IANA RDAP bootstrap |
+| `%APPDATA%\NullTrace\kev.json` | cached CISA KEV catalogue |
 
 ## Troubleshooting
 

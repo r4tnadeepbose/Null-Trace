@@ -66,7 +66,7 @@ class NullTraceApp(ctk.CTk):
         self.link_map: dict[int, str] = {}
         self.started = 0.0
         self._tick_job = None
-        self._toast = None
+        self._toast_widget = None
 
         self._build_shell()
         self._render_nav()
@@ -106,14 +106,16 @@ class NullTraceApp(ctk.CTk):
         credit.bind("<Button-1>", lambda _e: webbrowser.open(GITHUB))
         credit.configure(cursor="hand2")
 
-        self.search_var = tk.StringVar()
         self.search_entry = ctk.CTkEntry(
             sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32, corner_radius=7,
             fg_color=theme.BG, border_color=theme.BORDER, text_color=theme.TEXT,
-            font=ctk.CTkFont("Segoe UI", 11), textvariable=self.search_var)
+            placeholder_text_color=theme.FAINT, font=ctk.CTkFont("Segoe UI", 11))
         self.search_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
-        self.search_var.trace_add("write", lambda *_: self._render_nav(self.search_var.get()))
-        self.search_entry.bind("<Escape>", lambda _e: self.search_var.set(""))
+        self.search_entry.bind("<KeyRelease>",
+                               lambda _e: self._render_nav(self.search_entry.get()))
+        self.search_entry.bind(
+            "<Escape>",
+            lambda _e: (self.search_entry.delete(0, "end"), self._render_nav()))
 
         self.nav_scroll = ctk.CTkScrollableFrame(
             sidebar, fg_color="transparent", corner_radius=0,
@@ -121,18 +123,23 @@ class NullTraceApp(ctk.CTk):
         self.nav_scroll.grid(row=2, column=0, sticky="nsew", padx=(10, 4), pady=(0, 4))
         self.nav_scroll.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkFrame(sidebar, height=1, fg_color=theme.BORDER_SOFT).grid(
+        ctk.CTkFrame(sidebar, height=1, fg_color=theme.BORDER).grid(
             row=3, column=0, sticky="ew", padx=14, pady=(2, 0))
 
-        footer = ctk.CTkFrame(sidebar, fg_color="transparent")
-        footer.grid(row=4, column=0, sticky="ew", padx=12, pady=(6, 14))
+        footer = ctk.CTkFrame(sidebar, fg_color=theme.BG, corner_radius=0)
+        footer.grid(row=4, column=0, sticky="ew", padx=0, pady=(0, 0))
+        inner_footer = ctk.CTkFrame(footer, fg_color="transparent")
+        inner_footer.pack(fill="x", padx=12, pady=(8, 12))
+        ctk.CTkLabel(inner_footer, text="WORKSPACE", anchor="w",
+                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     text_color=theme.FAINT).pack(fill="x", padx=6, pady=(0, 4))
         for label, target in (("Dashboard", "dashboard"), ("History", "history"),
                               ("Settings", "settings")):
-            ctk.CTkButton(footer, text=label, height=32, corner_radius=7, anchor="w",
+            ctk.CTkButton(inner_footer, text=label, height=32, corner_radius=7, anchor="w",
                           fg_color="transparent", hover_color=theme.ELEV,
                           text_color=theme.MUTED, font=ctk.CTkFont("Segoe UI", 12),
                           command=lambda t=target: self._navigate(t)).pack(fill="x", pady=1)
-        ctk.CTkLabel(footer, text="Local only · requests go upstream",
+        ctk.CTkLabel(inner_footer, text="Local only · requests go upstream",
                      font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT,
                      anchor="w").pack(fill="x", padx=6, pady=(8, 0))
 
@@ -204,6 +211,8 @@ class NullTraceApp(ctk.CTk):
         self.form_widgets.clear()
         self.output = None
         self.output_status = None
+        # keep focus off auto-focused entries so placeholders stay visible
+        self.after(1, self.focus_set)
 
     def _page_header(self, title: str, subtitle: str, chip: str | None = None) -> ctk.CTkFrame:
         frame = ctk.CTkFrame(self.body, fg_color="transparent")
@@ -229,18 +238,18 @@ class NullTraceApp(ctk.CTk):
                             border_width=1, border_color=theme.BORDER_SOFT, **kwargs)
 
     def _toast(self, text: str, kind: str = "ok") -> None:
-        if self._toast is not None:
+        if self._toast_widget is not None:
             try:
-                self._toast.destroy()
+                self._toast_widget.destroy()
             except Exception:
                 pass
         color = {"ok": theme.OK, "warn": theme.WARN, "err": theme.ERR}.get(kind, theme.TEXT)
-        self._toast = ctk.CTkLabel(
+        self._toast_widget = ctk.CTkLabel(
             self.body, text=text, font=ctk.CTkFont("Segoe UI", 11), text_color=color,
             fg_color=theme.CARD, corner_radius=8, padx=14, pady=8,
             border_width=1, border_color=theme.BORDER)
-        self._toast.place(relx=0.985, rely=0.975, anchor="se")
-        label = self._toast
+        self._toast_widget.place(relx=0.985, rely=0.975, anchor="se")
+        label = self._toast_widget
 
         def dismiss() -> None:
             try:
@@ -276,7 +285,7 @@ class NullTraceApp(ctk.CTk):
         ctk.CTkLabel(header, text="Dashboard", anchor="w",
                      font=ctk.CTkFont("Segoe UI", 24, "bold"),
                      text_color=theme.TEXT).grid(row=0, column=0, sticky="w")
-        ctk.CTkLabel(header, text=f"{now:%A, %d %B %Y} · {len(self.modules)} modules ready",
+        ctk.CTkLabel(header, text=f"{now:%A, %d %B %Y}  ·  {len(self.modules)} modules ready",
                      anchor="w", font=ctk.CTkFont("Segoe UI", 11),
                      text_color=theme.MUTED).grid(row=1, column=0, sticky="w", pady=(4, 0))
 
@@ -284,13 +293,12 @@ class NullTraceApp(ctk.CTk):
         stats.grid(row=1, column=0, sticky="ew", padx=30)
         for column in range(4):
             stats.grid_columnconfigure(column, weight=1, uniform="stat")
-        tiles = (
+        for column, (label, value, hint, color) in enumerate((
             ("Total runs", str(len(records)), "stored locally", theme.ACCENT),
             ("Last 7 days", str(recent_week), "scans", theme.OK),
             ("API keys", f"{keys_set}/{len(KEY_LABELS)}", "configured", theme.WARN),
             ("Modules", str(len(self.modules)), "across 6 categories", theme.TEXT),
-        )
-        for column, (label, value, hint, color) in enumerate(tiles):
+        )):
             card = self._card(stats)
             card.grid(row=0, column=column, sticky="ew", padx=(0 if column == 0 else 8, 0))
             inner = ctk.CTkFrame(card, fg_color="transparent")
@@ -305,101 +313,108 @@ class NullTraceApp(ctk.CTk):
                          text_color=theme.MUTED).pack(fill="x")
 
         lower = ctk.CTkFrame(self.body, fg_color="transparent")
-        lower.grid(row=2, column=0, sticky="nsew", padx=30, pady=(14, 20))
+        lower.grid(row=2, column=0, sticky="nsew", padx=30, pady=(14, 18))
         lower.grid_columnconfigure(0, weight=3)
         lower.grid_columnconfigure(1, weight=2)
         lower.grid_rowconfigure(0, weight=1)
-        self.body.grid_rowconfigure(2, weight=1)
 
         left = self._card(lower)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
+        left.grid_columnconfigure(0, weight=1)
+        left.grid_rowconfigure(5, weight=1)
+
         ctk.CTkLabel(left, text="QUICK START", anchor="w",
                      font=ctk.CTkFont("Segoe UI", 9, "bold"),
-                     text_color=theme.FAINT).pack(fill="x", padx=18, pady=(14, 6))
+                     text_color=theme.FAINT).grid(row=0, column=0, sticky="w",
+                                                  padx=18, pady=(14, 6))
         quick = ctk.CTkFrame(left, fg_color="transparent")
-        quick.pack(fill="x", padx=12)
-        quick.grid_columnconfigure(0, weight=1)
-        quick.grid_columnconfigure(1, weight=1)
-        quick.grid_columnconfigure(2, weight=1)
+        quick.grid(row=1, column=0, sticky="ew", padx=14)
+        for column in range(3):
+            quick.grid_columnconfigure(column, weight=1)
         by_id = {m.id: m for m in self.modules}
         for index, module_id in enumerate(QUICK_MODULES):
             module = by_id.get(module_id)
             if not module:
                 continue
-            tile = ctk.CTkButton(
-                quick, text=module.title, height=40, corner_radius=8,
+            ctk.CTkButton(
+                quick, text=module.title, height=36, corner_radius=8,
                 fg_color=theme.ELEV, hover_color=theme.ELEV_HOVER, text_color=theme.TEXT,
                 font=ctk.CTkFont("Segoe UI", 11), anchor="w",
-                command=lambda m=module: self._select_module(m.id))
-            tile.grid(row=index // 3, column=index % 3, sticky="ew",
-                      padx=4, pady=4)
+                command=lambda m=module: self._select_module(m.id)
+            ).grid(row=index // 3, column=index % 3, sticky="ew", padx=4, pady=4)
 
         ctk.CTkLabel(left, text="RECENT RUNS", anchor="w",
                      font=ctk.CTkFont("Segoe UI", 9, "bold"),
-                     text_color=theme.FAINT).pack(fill="x", padx=18, pady=(18, 6))
+                     text_color=theme.FAINT).grid(row=2, column=0, sticky="w",
+                                                  padx=18, pady=(14, 4))
+        recent = ctk.CTkFrame(left, fg_color="transparent")
+        recent.grid(row=3, column=0, sticky="ew", padx=18)
+        recent.grid_columnconfigure(1, weight=1)
         if records:
-            for record in records[:6]:
-                row = ctk.CTkFrame(left, fg_color="transparent")
-                row.pack(fill="x", padx=18, pady=2)
-                row.grid_columnconfigure(1, weight=1)
-                ctk.CTkLabel(row, text=record["started"].replace("T", " ")[5:16],
-                             width=80, anchor="w", font=ctk.CTkFont("Consolas", 10),
-                             text_color=theme.FAINT).grid(row=0, column=0, sticky="w")
-                text = f"{record['title']}  ·  {record['target'] or '—'}"
-                link = ctk.CTkLabel(row, text=text[:70], anchor="w",
-                                    font=ctk.CTkFont("Segoe UI", 11), text_color=theme.TEXT,
-                                    cursor="hand2")
-                link.grid(row=0, column=1, sticky="w")
-                link.bind("<Button-1>", lambda _e, r=record: self._open_history(int(r["id"])))
-                status = {"ok": theme.OK, "error": theme.ERR,
-                          "cancelled": theme.WARN}.get(record["status"], theme.MUTED)
-                ctk.CTkLabel(row, text=record["status"], width=64, anchor="e",
+            for index, record in enumerate(records[:5]):
+                ctk.CTkLabel(recent, text=record["started"].replace("T", " ")[5:16],
+                             width=78, anchor="w", font=ctk.CTkFont("Consolas", 10),
+                             text_color=theme.FAINT).grid(row=index, column=0, sticky="w",
+                                                          pady=1)
+                link = ctk.CTkLabel(recent, anchor="w", cursor="hand2",
+                                    text=f"{record['title']}  ·  {record['target'] or '—'}"[:68],
+                                    font=ctk.CTkFont("Segoe UI", 11), text_color=theme.TEXT)
+                link.grid(row=index, column=1, sticky="w")
+                link.bind("<Button-1>",
+                          lambda _e, r=record: self._open_history(int(r["id"])))
+                status_color = {"ok": theme.OK, "error": theme.ERR,
+                                "cancelled": theme.WARN}.get(record["status"], theme.MUTED)
+                ctk.CTkLabel(recent, text=record["status"], width=60, anchor="e",
                              font=ctk.CTkFont("Segoe UI", 9),
-                             text_color=status).grid(row=0, column=2, sticky="e")
-            ctk.CTkButton(left, text="Open full history", height=30, corner_radius=7,
-                          fg_color="transparent", border_width=1, border_color=theme.BORDER,
-                          text_color=theme.MUTED, hover_color=theme.ELEV,
-                          command=self._show_history).pack(fill="x", padx=18, pady=(10, 16))
+                             text_color=status_color).grid(row=index, column=2, sticky="e")
         else:
-            ctk.CTkLabel(left, text="Nothing yet — run your first scan to populate history.",
+            ctk.CTkLabel(recent, text="Nothing yet — run your first scan.",
                          anchor="w", font=ctk.CTkFont("Segoe UI", 11),
-                         text_color=theme.FAINT).pack(fill="x", padx=18, pady=(0, 16))
+                         text_color=theme.FAINT).grid(row=0, column=0, columnspan=3,
+                                                      sticky="w")
+
+        ctk.CTkLabel(left, text="ALL MODULES", anchor="w",
+                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     text_color=theme.FAINT).grid(row=4, column=0, sticky="w",
+                                                  padx=18, pady=(16, 4))
+        browser = ctk.CTkScrollableFrame(left, fg_color="transparent", corner_radius=0,
+                                         scrollbar_button_color=theme.ELEV,
+                                         scrollbar_button_hover_color=theme.BORDER)
+        browser.grid(row=5, column=0, sticky="nsew", padx=14, pady=(0, 4))
+        for column in range(2):
+            browser.grid_columnconfigure(column, weight=1)
+        for index, module in enumerate(self.modules):
+            ctk.CTkButton(
+                browser, text=module.title, anchor="w", height=28, corner_radius=6,
+                fg_color="transparent", hover_color=theme.ELEV, text_color=theme.MUTED,
+                font=ctk.CTkFont("Segoe UI", 10),
+                command=lambda m=module: self._select_module(m.id)
+            ).grid(row=index // 2, column=index % 2, sticky="ew", padx=2, pady=1)
+        ctk.CTkButton(left, text="Open full history", height=30, corner_radius=7,
+                      fg_color="transparent", border_width=1, border_color=theme.BORDER,
+                      text_color=theme.MUTED, hover_color=theme.ELEV,
+                      command=self._show_history).grid(row=6, column=0, sticky="ew",
+                                                       padx=18, pady=(4, 16))
 
         right = self._card(lower)
         right.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
-
-        ctk.CTkButton(right, text="Manage keys", height=30, corner_radius=7,
-                      fg_color="transparent", border_width=1, border_color=theme.BORDER,
-                      text_color=theme.MUTED, hover_color=theme.ELEV,
-                      command=self._show_settings).pack(side="bottom", fill="x", padx=18,
-                                                        pady=(10, 16))
-        ctk.CTkLabel(right, text="LOCAL PATHS", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
-                     text_color=theme.FAINT).pack(side="bottom", fill="x", padx=18,
-                                                  pady=(0, 2))
-        ctk.CTkLabel(right, text=f"{CONFIG_PATH}\nhistory.db · kev.json · rdap_dns.json",
-                     anchor="w", justify="left", wraplength=250,
-                     font=ctk.CTkFont("Consolas", 9), text_color=theme.MUTED
-                     ).pack(side="bottom", fill="x", padx=18, pady=(0, 8))
-
         ctk.CTkLabel(right, text="ENVIRONMENT", anchor="w",
                      font=ctk.CTkFont("Segoe UI", 9, "bold"),
                      text_color=theme.FAINT).pack(fill="x", padx=18, pady=(14, 8))
-        checks = [
+        for label, value, good in (
             ("Python", sys.version.split()[0], True),
             ("Platform", f"{platform.system()} {platform.release()}", True),
             ("ExifTool", "found" if shutil.which("exiftool") else "not installed",
              bool(shutil.which("exiftool"))),
             ("Tor SOCKS", "found" if shutil.which("tor") else "not installed",
              bool(shutil.which("tor"))),
-        ]
-        for label, value, good in checks:
-            row = ctk.CTkFrame(right, fg_color="transparent")
-            row.pack(fill="x", padx=18, pady=2)
-            ctk.CTkLabel(row, text=label, width=86, anchor="w",
+        ):
+            row = ctk.CTkFrame(right, fg_color="transparent", height=20)
+            row.pack(fill="x", padx=18)
+            ctk.CTkLabel(row, text=label, width=86, height=20, anchor="w",
                          font=ctk.CTkFont("Segoe UI", 10),
                          text_color=theme.MUTED).pack(side="left")
-            ctk.CTkLabel(row, text=value[:32], anchor="w",
+            ctk.CTkLabel(row, text=value[:32], height=20, anchor="w",
                          font=ctk.CTkFont("Consolas", 10),
                          text_color=theme.TEXT if good else theme.WARN).pack(side="left")
 
@@ -411,14 +426,29 @@ class NullTraceApp(ctk.CTk):
         keys.grid_columnconfigure(0, weight=1)
         keys.grid_columnconfigure(1, weight=1)
         for index, (name, label, _hint) in enumerate(KEY_LABELS):
-            cell = ctk.CTkFrame(keys, fg_color="transparent")
-            cell.grid(row=index // 2, column=index % 2, sticky="w", padx=4, pady=1)
+            cell = ctk.CTkFrame(keys, fg_color="transparent", height=18)
+            cell.grid(row=index // 2, column=index % 2, sticky="w", padx=4)
             ok = bool(CONFIG.key(name))
-            ctk.CTkLabel(cell, text="●", width=12, anchor="w",
+            ctk.CTkLabel(cell, text="●", width=12, height=18, anchor="w",
                          font=ctk.CTkFont("Segoe UI", 9),
                          text_color=theme.OK if ok else theme.FAINT).pack(side="left")
-            ctk.CTkLabel(cell, text=label, anchor="w", font=ctk.CTkFont("Segoe UI", 9),
+            ctk.CTkLabel(cell, text=label, height=18, anchor="w",
+                         font=ctk.CTkFont("Segoe UI", 9),
                          text_color=theme.TEXT if ok else theme.MUTED).pack(side="left")
+
+        ctk.CTkLabel(right, text=f"{CONFIG_PATH}\nhistory.db · kev.json · rdap_dns.json",
+                     anchor="w", justify="left", wraplength=260,
+                     font=ctk.CTkFont("Consolas", 9), text_color=theme.MUTED
+                     ).pack(side="bottom", fill="x", padx=18, pady=(0, 14))
+        ctk.CTkLabel(right, text="LOCAL PATHS", anchor="w",
+                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     text_color=theme.FAINT).pack(side="bottom", fill="x", padx=18,
+                                                  pady=(0, 2))
+        ctk.CTkButton(right, text="Manage keys", height=30, corner_radius=7,
+                      fg_color="transparent", border_width=1, border_color=theme.BORDER,
+                      text_color=theme.MUTED, hover_color=theme.ELEV,
+                      command=self._show_settings).pack(side="bottom", fill="x", padx=18,
+                                                        pady=(10, 8))
 
     # ------------------------------------------------------------------ module view
     def _select_module(self, module_id: str) -> None:
@@ -546,94 +576,122 @@ class NullTraceApp(ctk.CTk):
     # ------------------------------------------------------------------ forms
     def _build_form(self, module: Module) -> None:
         state = self.form_state.setdefault(module.id, {})
-        row = 0
-        for field in module.fields:
-            default = state.get(field.name, field.default)
-            if field.kind == "checkbox":
-                variable = tk.BooleanVar(value=str(default) in ("1", "True", "true"))
-                ctk.CTkCheckBox(
-                    self.form, text=field.label, variable=variable,
-                    font=ctk.CTkFont("Segoe UI", 11), text_color=theme.MUTED,
-                    checkbox_width=18, checkbox_height=18, corner_radius=4,
-                    border_width=2, border_color=theme.BORDER,
-                    fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
-                    checkmark_color="#101418",
-                ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(8, 2))
-                self.form_widgets[field.name] = FieldWidget(
-                    field, lambda v=variable: bool(v.get()),
-                    lambda val, v=variable: v.set(bool(val)))
-                row += 1
-                if field.help:
-                    ctk.CTkLabel(self.form, text=field.help, anchor="w", justify="left",
-                                 wraplength=820, font=ctk.CTkFont("Segoe UI", 9),
-                                 text_color=theme.FAINT
-                                 ).grid(row=row, column=0, columnspan=2, sticky="w",
-                                        padx=(26, 0))
-                    row += 1
-                continue
+        self.form.grid_columnconfigure(0, weight=1, uniform="form")
+        self.form.grid_columnconfigure(1, weight=1, uniform="form")
+        cursor = [0, 0]
 
-            ctk.CTkLabel(self.form, text=field.label + (" *" if field.required else ""),
+        def place(span: int, builder) -> None:
+            row, col = cursor
+            if col + span > 2:
+                cursor[0] += 1
+                cursor[1] = 0
+                row, col = cursor
+            cell = ctk.CTkFrame(self.form, fg_color="transparent")
+            cell.grid(row=row, column=col, columnspan=span, sticky="new",
+                      padx=(0 if col == 0 else 12, 0), pady=(2, 10))
+            cell.grid_columnconfigure(0, weight=1)
+            builder(cell)
+            cursor[1] += span
+            if cursor[1] >= 2:
+                cursor[0] += 1
+                cursor[1] = 0
+
+        def label_for(cell, field: Field, row: int) -> None:
+            ctk.CTkLabel(cell, text=field.label + (" *" if field.required else ""),
                          anchor="w", font=ctk.CTkFont("Segoe UI", 11),
                          text_color=theme.TEXT if field.required else theme.MUTED
-                         ).grid(row=row, column=0, sticky="w", pady=(6, 3))
-            row += 1
+                         ).grid(row=row, column=0, sticky="w", pady=(0, 3))
+
+        def hint_for(cell, field: Field, row: int) -> None:
+            if field.help:
+                ctk.CTkLabel(cell, text=field.help, anchor="w", justify="left",
+                             wraplength=520, font=ctk.CTkFont("Segoe UI", 9),
+                             text_color=theme.FAINT).grid(row=row, column=0, sticky="w",
+                                                          pady=(3, 0))
+
+        for field in module.fields:
+            default = state.get(field.name, field.default)
+
+            if field.kind == "checkbox":
+                def build_checkbox(cell, f=field, d=default) -> None:
+                    variable = tk.BooleanVar(value=str(d) in ("1", "True", "true"))
+                    ctk.CTkCheckBox(
+                        cell, text=f.label, variable=variable,
+                        font=ctk.CTkFont("Segoe UI", 11), text_color=theme.MUTED,
+                        checkbox_width=18, checkbox_height=18, corner_radius=4,
+                        border_width=2, border_color=theme.BORDER,
+                        fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
+                        checkmark_color="#101418",
+                    ).grid(row=0, column=0, sticky="w", pady=(4, 0))
+                    self.form_widgets[f.name] = FieldWidget(
+                        f, lambda v=variable: bool(v.get()),
+                        lambda val, v=variable: v.set(bool(val)))
+                    hint_for(cell, f, 1)
+                place(1, build_checkbox)
+                continue
+
+            if field.kind == "multiline":
+                def build_multiline(cell, f=field, d=default) -> None:
+                    label_for(cell, f, 0)
+                    widget = ctk.CTkTextbox(
+                        cell, height=92, corner_radius=6, fg_color=theme.BG,
+                        border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
+                        font=ctk.CTkFont("Consolas", 11), wrap="word")
+                    widget.grid(row=1, column=0, sticky="ew")
+                    widget.insert("1.0", str(d))
+                    self.form_widgets[f.name] = FieldWidget(
+                        f, lambda w=widget: w.get("1.0", "end-1c"),
+                        lambda val, w=widget: (w.delete("1.0", "end"),
+                                              w.insert("1.0", str(val))))
+                    hint_for(cell, f, 2)
+                place(2, build_multiline)
+                continue
 
             if field.kind == "choice":
-                variable = tk.StringVar(value=str(default) if default else
-                                        (field.choices[0] if field.choices else ""))
-                ctk.CTkOptionMenu(
-                    self.form, values=list(field.choices), variable=variable, width=320,
-                    height=32, corner_radius=6, fg_color=theme.ELEV,
-                    button_color=theme.ELEV, button_hover_color=theme.BORDER,
-                    text_color=theme.TEXT, dropdown_fg_color=theme.PANEL,
-                    dropdown_hover_color=theme.ELEV, dropdown_text_color=theme.TEXT,
-                    font=ctk.CTkFont("Segoe UI", 11),
-                ).grid(row=row, column=0, sticky="w")
-                self.form_widgets[field.name] = FieldWidget(
-                    field, lambda v=variable: v.get(), lambda val, v=variable: v.set(str(val)))
-                row += 1
-            elif field.kind == "multiline":
-                widget = ctk.CTkTextbox(
-                    self.form, width=620, height=88, corner_radius=6, fg_color=theme.BG,
-                    border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
-                    font=ctk.CTkFont("Consolas", 11), wrap="word")
-                widget.grid(row=row, column=0, sticky="w")
-                widget.insert("1.0", str(default))
-                self.form_widgets[field.name] = FieldWidget(
-                    field, lambda w=widget: w.get("1.0", "end-1c"),
-                    lambda val, w=widget: (w.delete("1.0", "end"), w.insert("1.0", str(val))))
-                row += 1
-            else:
-                wrapper = ctk.CTkFrame(self.form, fg_color="transparent")
-                wrapper.grid(row=row, column=0, sticky="w")
+                def build_choice(cell, f=field, d=default) -> None:
+                    label_for(cell, f, 0)
+                    variable = tk.StringVar(value=str(d) if d else
+                                            (f.choices[0] if f.choices else ""))
+                    ctk.CTkOptionMenu(
+                        cell, values=list(f.choices), variable=variable, height=32,
+                        corner_radius=6, fg_color=theme.ELEV, button_color=theme.ELEV,
+                        button_hover_color=theme.BORDER, text_color=theme.TEXT,
+                        dropdown_fg_color=theme.PANEL, dropdown_hover_color=theme.ELEV,
+                        dropdown_text_color=theme.TEXT,
+                        font=ctk.CTkFont("Segoe UI", 11),
+                    ).grid(row=1, column=0, sticky="ew")
+                    self.form_widgets[f.name] = FieldWidget(
+                        f, lambda v=variable: v.get(),
+                        lambda val, v=variable: v.set(str(val)))
+                    hint_for(cell, f, 2)
+                place(1, build_choice)
+                continue
+
+            def build_text(cell, f=field, d=default) -> None:
+                label_for(cell, f, 0)
+                wrapper = ctk.CTkFrame(cell, fg_color="transparent")
+                wrapper.grid(row=1, column=0, sticky="ew")
                 wrapper.grid_columnconfigure(0, weight=1)
                 entry = ctk.CTkEntry(
-                    wrapper, width=620, height=32, corner_radius=6, fg_color=theme.BG,
+                    wrapper, height=32, corner_radius=6, fg_color=theme.BG,
                     border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
-                    placeholder_text=field.placeholder,
+                    placeholder_text=f.placeholder,
                     font=ctk.CTkFont("Consolas", 11))
                 entry.grid(row=0, column=0, sticky="ew")
-                if default:
-                    entry.insert(0, str(default))
-                if field.kind == "file":
+                if d:
+                    entry.insert(0, str(d))
+                if f.kind == "file":
                     ctk.CTkButton(
                         wrapper, text="Browse", width=84, height=32, corner_radius=6,
                         fg_color=theme.ELEV, hover_color=theme.BORDER, text_color=theme.TEXT,
                         font=ctk.CTkFont("Segoe UI", 11),
                         command=lambda e=entry: self._browse(e),
                     ).grid(row=0, column=1, padx=(8, 0))
-                self.form_widgets[field.name] = FieldWidget(
-                    field, lambda e=entry: e.get(),
+                self.form_widgets[f.name] = FieldWidget(
+                    f, lambda e=entry: e.get(),
                     lambda val, e=entry: (e.delete(0, "end"), e.insert(0, str(val))))
-                row += 1
-
-            if field.help:
-                ctk.CTkLabel(self.form, text=field.help, anchor="w", justify="left",
-                             wraplength=820, font=ctk.CTkFont("Segoe UI", 9),
-                             text_color=theme.FAINT).grid(row=row, column=0, sticky="w",
-                                                          pady=(0, 2))
-                row += 1
-
+                hint_for(cell, f, 2)
+            place(1, build_text)
     def _browse(self, entry) -> None:
         path = filedialog.askopenfilename(title="Select a file")
         if path:
@@ -650,8 +708,6 @@ class NullTraceApp(ctk.CTk):
                 value = bool(value)
             elif field.kind == "text" and isinstance(value, str):
                 value = value.strip()
-                if value == field.placeholder:
-                    value = ""
             state[field.name] = value
             values[field.name] = value
         return values
@@ -824,7 +880,7 @@ class NullTraceApp(ctk.CTk):
         scroll = ctk.CTkScrollableFrame(holder, fg_color="transparent", corner_radius=0,
                                         scrollbar_button_color=theme.ELEV)
         scroll.grid(row=0, column=0, sticky="nsew")
-        scroll.grid_columnconfigure(1, weight=1)
+        scroll.grid_columnconfigure(0, weight=1)
 
         card = self._card(scroll)
         card.grid(row=0, column=0, sticky="ew")
@@ -922,7 +978,8 @@ class NullTraceApp(ctk.CTk):
                              corner_radius=7, fg_color=theme.BG, border_color=theme.BORDER,
                              text_color=theme.TEXT, font=ctk.CTkFont("Segoe UI", 11))
         entry.grid(row=0, column=0, sticky="ew")
-        entry.insert(0, needle)
+        if needle:
+            entry.insert(0, needle)
         ctk.CTkButton(bar, text="Clear all", width=96, height=32, corner_radius=7,
                       fg_color="transparent", border_width=1, border_color=theme.BORDER,
                       text_color=theme.ERR, hover_color=theme.ELEV,
