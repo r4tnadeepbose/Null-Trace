@@ -22,6 +22,17 @@ Palette (matches the application theme in `nulltrace/theme.py`):
 | signal red | `#e23b3b` |
 | border | `#9a2f34` (cards `#5f2024`) |
 
+Light mode (full white, black borders):
+
+| Role | Hex |
+|---|---|
+| background | `#ffffff` |
+| panel | `#fafafa` |
+| text | `#000000` |
+| muted | `#2b2b2b` |
+| signal red | `#c62828` |
+| border | `#000000` (cards `#3c3c3c`) |
+
 To generate a Windows icon from the mark:
 
 ```powershell
