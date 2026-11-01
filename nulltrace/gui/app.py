@@ -674,10 +674,10 @@ class NullTraceApp(ctk.CTk):
         right = self._card(lower)
         right.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         right.grid_columnconfigure(0, weight=1)
-        right.grid_rowconfigure(1, weight=1)
+        right.grid_rowconfigure(0, weight=1)
 
         body = ctk.CTkFrame(right, fg_color="transparent")
-        body.grid(row=0, column=0, sticky="new")
+        body.grid(row=0, column=0, sticky="nsew")
 
         ctk.CTkLabel(body, text="ENVIRONMENT", anchor="w", font=theme.font(9, "bold"),
                      text_color=theme.ACCENT).pack(fill="x", padx=18, pady=(12, 5))
@@ -696,6 +696,8 @@ class NullTraceApp(ctk.CTk):
                          font=theme.font(10), text_color=theme.MUTED).pack(side="left")
             ctk.CTkLabel(row, text=value[:34], anchor="w", font=theme.mono(10),
                          text_color=theme.TEXT if good else theme.WARN).pack(side="left")
+
+        ctk.CTkFrame(body, height=1, fg_color="transparent").pack(fill="both", expand=True)
 
         ctk.CTkLabel(body, text="KEYS", anchor="w", font=theme.font(9, "bold"),
                      text_color=theme.ACCENT).pack(fill="x", padx=18, pady=(12, 4))
@@ -718,6 +720,8 @@ class NullTraceApp(ctk.CTk):
                      anchor="w", font=theme.font(9), text_color=theme.FAINT
                      ).pack(fill="x", padx=18, pady=(6, 0))
 
+        ctk.CTkFrame(body, height=1, fg_color="transparent").pack(fill="both", expand=True)
+
         ctk.CTkButton(body, text="MANAGE KEYS", height=30, corner_radius=theme.RADIUS,
                       fg_color="transparent", border_width=1, border_color=theme.BORDER,
                       text_color=theme.MUTED, hover_color=theme.ELEV,
@@ -733,6 +737,8 @@ class NullTraceApp(ctk.CTk):
                      anchor="w", justify="left", wraplength=theme.px(320),
                      font=theme.mono(9), text_color=theme.FAINT
                      ).pack(fill="x", padx=18, pady=(0, 12))
+
+
 
     def _refit_dashboard(self, _event=None) -> None:
         lower = getattr(self, "_lower_frame", None)
