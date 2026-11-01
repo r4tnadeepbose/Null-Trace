@@ -19,6 +19,7 @@ import customtkinter as ctk
 from .. import theme
 from ..config import CONFIG, CONFIG_PATH, KEY_LABELS
 from ..history import add_scan, clear_history, delete_scan, list_scans, load_scan
+from ..modules.metadata import exiftool_path
 from ..job import Event, Field, JobRunner, Module
 from ..modules import all_modules, grouped
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
@@ -627,8 +628,8 @@ class NullTraceApp(ctk.CTk):
         for label, value, good in (
             ("Python", sys.version.split()[0], True),
             ("Platform", f"{platform.system()} {platform.release()}", True),
-            ("ExifTool", "found" if shutil.which("exiftool") else "not installed",
-             bool(shutil.which("exiftool"))),
+            ("ExifTool", "installed" if exiftool_path() else "not installed",
+             bool(exiftool_path())),
             ("Tor SOCKS", "found" if shutil.which("tor") else "not installed",
              bool(shutil.which("tor"))),
         ):
