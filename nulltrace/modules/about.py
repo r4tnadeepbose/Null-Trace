@@ -6,6 +6,11 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.3.0", [
+        "Eight more modules: TLS Versions, Takeover Check, CORS Check, Cookie",
+        "Audit, Bulk URLs, My Connection, JWT Inspector and Hash Identifier.",
+        "New Utility category for offline tools; 48 modules across 8 groups.",
+    ]),
     ("1.2.2", [
         "Tor Expert Bundle installed and detected from the usual folders; the",
         "dashboard distinguishes running, installed and missing, and Toolkit",
