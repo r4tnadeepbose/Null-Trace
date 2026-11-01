@@ -6,6 +6,13 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.3.1", [
+        "Fixed a crash when opening any module with a dropdown: the border",
+        "options passed to the menu widget were not supported, leaving a",
+        "half-built widget that failed again on close.",
+        "View switching is about four times faster; pending timers are",
+        "cancelled on exit; a GUI smoke test now builds all 48 views.",
+    ]),
     ("1.3.0", [
         "Eight more modules: TLS Versions, Takeover Check, CORS Check, Cookie",
         "Audit, Bulk URLs, My Connection, JWT Inspector and Hash Identifier.",

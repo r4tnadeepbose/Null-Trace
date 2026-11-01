@@ -59,6 +59,7 @@ class NullTraceApp(ctk.CTk):
         self.current: Module | None = None
         self.view = "dashboard"
         self.nav_buttons: dict[str, ctk.CTkButton] = {}
+        self.nav_rows: dict[str, tuple] = {}
         self.active_nav: str | None = None
         self.form_widgets: dict[str, FieldWidget] = {}
         self.form_state: dict[str, dict[str, object]] = {}
@@ -71,6 +72,7 @@ class NullTraceApp(ctk.CTk):
         self._tick_job = None
         self._flush_job = None
         self._pending: list[tuple[str, str]] = []
+        self._poll_id = None
         self._toast_widget = None
         self._brand_image = None
 
@@ -84,7 +86,7 @@ class NullTraceApp(ctk.CTk):
         self.bind("<Control-f>", lambda _e: self.search_entry.focus_set())
         self.bind("<F11>", lambda _e: self._toggle_fullscreen())
         self.bind("<Escape>", self._on_escape)
-        self.after(200, self._poll_queue)
+        self._poll_id = self.after(200, self._poll_queue)
 
     # ------------------------------------------------------------------ shell
     def _brand_photo(self):
@@ -328,6 +330,7 @@ class NullTraceApp(ctk.CTk):
         for child in self.nav_scroll.winfo_children():
             child.destroy()
         self.nav_buttons.clear()
+        self.nav_rows.clear()
         needle = needle.strip().lower()
         shown = 0
         for category, modules in self.groups.items():
@@ -342,9 +345,8 @@ class NullTraceApp(ctk.CTk):
                          font=theme.font(9, "bold"), text_color=theme.FAINT,
                          anchor="w").pack(fill="x", padx=8, pady=(12, 3))
             for module in matches:
-                active = module.id == self.active_nav
-                self._nav_row(self.nav_scroll, module.title.upper(),
-                              lambda m=module: self._select_module(m.id), active)
+                self._nav_row(self.nav_scroll, module.id, module.title.upper(),
+                              lambda m=module: self._select_module(m.id))
                 shown += 1
         ctk.CTkFrame(self.nav_scroll, height=8, fg_color="transparent").pack(fill="x")
         if not shown:
@@ -353,7 +355,12 @@ class NullTraceApp(ctk.CTk):
                          anchor="w", wraplength=190).pack(fill="x", padx=8, pady=12)
 
     def _highlight_nav(self) -> None:
-        self._render_nav(self.search_entry.get() if getattr(self, "search_entry", None) else "")
+        for module_id, (row, marker, text) in self.nav_rows.items():
+            active = module_id == self.active_nav
+            row.configure(fg_color=theme.ACCENT_DIM if active else "transparent")
+            marker.configure(fg_color=theme.ACCENT if active else "transparent")
+            text.configure(text_color=theme.TEXT if active else theme.MUTED,
+                           font=theme.font(10, "bold" if active else None))
 
     def _navigate(self, target: str) -> None:
         if self.runner.running:
@@ -443,27 +450,29 @@ class NullTraceApp(ctk.CTk):
             pass
 
     # ------------------------------------------------------------------ dashboard
-    def _nav_row(self, parent, label: str, command, active: bool = False) -> None:
+    def _nav_row(self, parent, module_id: str, label: str, command) -> None:
         """A nav entry with its own padding, indicator and hover state."""
-        row = ctk.CTkFrame(parent, fg_color=theme.ACCENT_DIM if active else "transparent",
+        row = ctk.CTkFrame(parent, fg_color="transparent",
                            corner_radius=theme.RADIUS_SMALL, height=28)
         row.pack(fill="x", pady=1)
-        marker = ctk.CTkFrame(row, width=2, height=1,
-                              fg_color=theme.ACCENT if active else "transparent")
+        marker = ctk.CTkFrame(row, width=2, height=1, fg_color="transparent")
         marker.pack(side="left", fill="y", padx=(0, 8))
         text = ctk.CTkLabel(row, text=label, anchor="w", height=22,
-                            font=theme.font(10, "bold" if active else None),
-                            text_color=theme.TEXT if active else theme.MUTED)
+                            font=theme.font(10), text_color=theme.MUTED)
         text.pack(side="left", fill="x", expand=True, pady=3, padx=(0, 6))
+        self.nav_rows[module_id] = (row, marker, text)
+
+        def is_active() -> bool:
+            return self.active_nav == module_id
 
         def enter(_event=None) -> None:
-            if not active:
+            if not is_active():
                 row.configure(fg_color=theme.ELEV)
                 text.configure(text_color=theme.TEXT)
                 marker.configure(fg_color=theme.BORDER_SOFT)
 
         def leave(_event=None) -> None:
-            if not active:
+            if not is_active():
                 row.configure(fg_color="transparent")
                 text.configure(text_color=theme.MUTED)
                 marker.configure(fg_color="transparent")
@@ -954,15 +963,19 @@ class NullTraceApp(ctk.CTk):
                     label_for(cell, f, 0)
                     variable = tk.StringVar(value=str(d) if d else
                                             (f.choices[0] if f.choices else ""))
+                    # CTkOptionMenu rejects border_width/border_color, so the red
+                    # edge comes from a 1px frame around it.
+                    frame = ctk.CTkFrame(cell, fg_color=theme.BORDER,
+                                         corner_radius=theme.RADIUS, border_width=0)
+                    frame.grid(row=1, column=0, sticky="ew")
                     ctk.CTkOptionMenu(
-                        cell, values=list(f.choices), variable=variable, height=32,
-                        corner_radius=theme.RADIUS, fg_color=theme.ELEV, button_color=theme.ELEV,
-                        border_width=1, border_color=theme.BORDER,
-                        button_hover_color=theme.BORDER, text_color=theme.TEXT,
-                        dropdown_fg_color=theme.PANEL, dropdown_hover_color=theme.ELEV,
-                        dropdown_text_color=theme.TEXT,
+                        frame, values=list(f.choices), variable=variable, height=32,
+                        corner_radius=theme.RADIUS, fg_color=theme.ELEV,
+                        button_color=theme.ELEV, button_hover_color=theme.BORDER,
+                        text_color=theme.TEXT, dropdown_fg_color=theme.PANEL,
+                        dropdown_hover_color=theme.ELEV, dropdown_text_color=theme.TEXT,
                         font=theme.font(11),
-                    ).grid(row=1, column=0, sticky="ew")
+                    ).pack(fill="x", padx=1, pady=1)
                     self.form_widgets[f.name] = FieldWidget(
                         f, lambda v=variable: v.get(),
                         lambda val, v=variable: v.set(str(val)))
@@ -1188,11 +1201,16 @@ class NullTraceApp(ctk.CTk):
 
     def _poll_queue(self) -> None:
         try:
+            if not self.winfo_exists():
+                return
+        except Exception:
+            return
+        try:
             while True:
                 self._handle_event(self.runner.events.get_nowait())
         except queue.Empty:
             pass
-        self.after(80, self._poll_queue)
+        self._poll_id = self.after(80, self._poll_queue)
 
     def _handle_event(self, event: Event) -> None:
         if event.kind == "emit":
@@ -1646,6 +1664,15 @@ class NullTraceApp(ctk.CTk):
             pass
 
     def _on_close(self) -> None:
+        for job in (self._poll_id, self._tick_job, self._flush_job):
+            if job:
+                try:
+                    self.after_cancel(job)
+                except Exception:
+                    pass
+        self._poll_id = None
+        self._tick_job = None
+        self._flush_job = None
         if self.runner.running:
             if not messagebox.askyesno(APP_NAME, "A scan is running. Quit anyway?"):
                 return
