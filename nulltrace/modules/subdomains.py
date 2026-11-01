@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import re
-from concurrent.futures import ThreadPoolExecutor
 
 from ..datasets import load_lines
 from ..job import Field, Module
@@ -16,6 +15,7 @@ _DEFAULT_BRUTE_WORDS = (
     "internal", "intranet", "db", "backup", "old", "beta", "demo", "qa", "uat", "m", "wap",
 )
 BRUTE_WORDS = tuple(load_lines("subdomain_words.txt", _DEFAULT_BRUTE_WORDS))
+RESOLVE_LIMIT = 400
 
 
 def _crtsh(domain: str) -> set[str]:
@@ -53,14 +53,20 @@ def _hackertarget(domain: str) -> set[str]:
     return out
 
 
+def resolve_many(hosts: list[str], workers: int = 128) -> dict[str, list[str]]:
+    """Resolve names concurrently through the OS resolver (fast, no extra deps)."""
+    from ..parallel import map_parallel
+
+    def one(host: str) -> tuple[str, list[str]]:
+        return host, resolve(host)
+
+    return dict(map_parallel(one, hosts, workers=workers))
+
+
 def _brute(domain: str) -> set[str]:
-    found = set()
-    with ThreadPoolExecutor(max_workers=50) as pool:
-        for word, addresses in zip(BRUTE_WORDS, pool.map(
-                lambda w: resolve(f"{w}.{domain}"), BRUTE_WORDS)):
-            if addresses:
-                found.add(f"{word}.{domain}")
-    return found
+    names = [f"{word}.{domain}" for word in BRUTE_WORDS]
+    resolved = resolve_many(names)
+    return {host for host, addresses in resolved.items() if addresses}
 
 
 def run(ctx) -> None:
@@ -99,12 +105,16 @@ def run(ctx) -> None:
     resolve_addresses = ctx.checked("resolve")
     ctx.section("Subdomains")
     if resolve_addresses:
-        ctx.status("Resolving ...")
-        with ThreadPoolExecutor(max_workers=30) as pool:
-            addresses = list(pool.map(resolve, sorted(combined)))
+        targets = sorted(combined)
+        if len(targets) > RESOLVE_LIMIT:
+            ctx.muted(f"Resolving the first {RESOLVE_LIMIT} of {len(targets)} names "
+                      f"(crt.sh often returns thousands of stale hosts).")
+            targets = targets[:RESOLVE_LIMIT]
+        ctx.status(f"Resolving {len(targets)} hosts ...")
+        resolved = resolve_many(targets)
         rows = [
-            (host, ", ".join(addr[:3]) if addr else "no A/AAAA")
-            for host, addr in zip(sorted(combined), addresses)
+            (host, ", ".join(addresses[:3]) if addresses else "no A/AAAA")
+            for host, addresses in resolved.items()
         ]
         ctx.table(("Subdomain", "Addresses"), rows)
     else:

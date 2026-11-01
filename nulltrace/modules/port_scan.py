@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import socket
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from ..job import Field, Module
 from ..net import HttpError, get_json, resolve
+from ..parallel import map_parallel, worker_count
 
 TOP_100 = [
     7, 9, 13, 21, 22, 23, 25, 26, 37, 53, 79, 80, 81, 82, 83, 84, 85, 88, 89, 90, 99, 100, 106,
@@ -119,31 +118,26 @@ def run(ctx) -> None:
         timeout = max(0.2, float(ctx.value("timeout") or "1.0"))
     except ValueError:
         pass
-    workers = 200 if len(ports) > 500 else 100
+    workers = worker_count(len(ports))
+    banner = ctx.checked("banner")
 
     ctx.title(f"Port scan — {raw} ({host})")
     ctx.kv("Ports to probe", len(ports))
     ctx.kv("Timeout", f"{timeout}s per port")
+    ctx.kv("Workers", workers)
     ctx.muted("Only scan systems you own or are authorised to test.")
 
-    open_ports: list[dict] = []
-    done = 0
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {
-            pool.submit(_scan_one, host, port, timeout, ctx.checked("banner")): port
-            for port in ports
-        }
-        for future in as_completed(futures):
-            if ctx.cancel_event.is_set():
-                for pending in futures:
-                    pending.cancel()
-                ctx.check_cancel()
-            done += 1
-            if done % 25 == 0:
-                ctx.status(f"Scanned {done}/{len(ports)} — {len(open_ports)} open")
-            result = future.result()
-            if result:
-                open_ports.append(result)
+    def probe(port: int) -> dict | None:
+        return _scan_one(host, port, timeout, banner)
+
+    def progress(done: int, total: int) -> None:
+        if done % 64 == 0 or done == total:
+            ctx.status(f"Scanned {done}/{total}")
+
+    found = map_parallel(probe, ports, workers=workers,
+                         should_stop=ctx.cancel_event.is_set, on_progress=progress)
+    ctx.check_cancel()
+    open_ports = [item for item in found if item]
 
     ctx.section("Results")
     if open_ports:

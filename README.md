@@ -223,6 +223,15 @@ ExifTool, or `winget install OliverBetz.ExifTool`). Pillow only reads image EXIF
 **Port scan needs administrator?** No — it uses ordinary TCP connect. Some hosts
 rate-limit or block SYN-less scans; that's their firewall, not a bug.
 
+**The window closed or froze during a scan** — fixed in 1.0.x; it was a Tk
+finaliser running on the worker thread. If it ever happens again, the reason is
+written to `%APPDATA%\Null-Trace\crash.log`; attach that file to a bug report.
+
+**Scans feel slow** — port scanning runs 512 connections at a time and DNS
+resolution 128 lookups at a time. Lower `timeout` before widening ranges; a
+/16 sweep still takes minutes because it is 65,535 round trips, not because of
+Python.
+
 ## Author
 
 **Ratnadeep Bose** (he/him) — [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose?tab=repositories)

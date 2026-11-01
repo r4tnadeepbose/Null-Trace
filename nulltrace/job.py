@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import queue
 import threading
 import traceback
@@ -161,20 +162,32 @@ class JobRunner:
         context = Context(inputs, self.events.put, self._cancel)
 
         def _work() -> None:
+            # Tk objects must only be finalised on the UI thread. A garbage
+            # collection here can run tkinter.font.Font.__del__, which issues a
+            # Tcl call and deadlocks against the main loop. Automatic GC stays
+            # off while the job runs; the UI thread collects instead.
+            gc_was_enabled = gc.isenabled()
+            if gc_was_enabled:
+                gc.disable()
             try:
                 module.run(context)
             except Cancelled:
                 self.events.put(Event("emit", {"kind": "warn", "text": "Stopped by user."}))
                 self.events.put(Event("done", {"status": "cancelled"}))
                 return
-            except Exception as exc:  # surfaced in the UI, not swallowed
+            except BaseException as exc:  # never let the worker die silently
                 self.events.put(Event("emit", {
                     "kind": "err",
                     "text": f"{type(exc).__name__}: {exc}",
                 }))
-                tb = traceback.format_exc(limit=4)
+                tb = traceback.format_exc(limit=6)
                 for line in tb.splitlines():
                     self.events.put(Event("emit", {"kind": "muted", "text": line}))
+                try:
+                    from .crashlog import write
+                    write(f"Module {module.id} crashed:\n{tb}")
+                except Exception:
+                    pass
                 self.events.put(Event("done", {"status": "error"}))
                 return
             self.events.put(Event("done", {"status": "ok", "warnings": context.warnings}))

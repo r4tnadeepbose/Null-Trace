@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gc
 import platform
 import queue
 import shutil
@@ -66,6 +67,8 @@ class NullTraceApp(ctk.CTk):
         self.link_map: dict[int, str] = {}
         self.started = 0.0
         self._tick_job = None
+        self._flush_job = None
+        self._pending: list[tuple[str, str]] = []
         self._toast_widget = None
 
         self._build_shell()
@@ -517,6 +520,7 @@ class NullTraceApp(ctk.CTk):
         self._emit_line("muted", f"{module.summary}")
         self._emit_line("muted",
                         "Results stream here. Click any underlined link to open it.")
+        self._flush_pending()
 
     def _build_output(self, card) -> None:
         bar = ctk.CTkFrame(card, fg_color="transparent")
@@ -717,37 +721,63 @@ class NullTraceApp(ctk.CTk):
         if self.output_status is not None and self.output_status.winfo_exists():
             self.output_status.configure(text=text, text_color=color)
 
-    def _append(self, kind: str, text: str, url: str | None = None) -> None:
+    def _emit_line(self, kind: str, text: str) -> None:
+        """Queue a line; the widget is updated in batches to keep the UI smooth."""
+        self._pending.append((kind, text))
+        if self._flush_job is None:
+            self._flush_job = self.after(60, self._flush_pending)
+
+    def _flush_pending(self) -> None:
+        if self._flush_job is not None:
+            try:
+                self.after_cancel(self._flush_job)
+            except Exception:
+                pass
+            self._flush_job = None
+        if not self._pending:
+            return
+        batch, self._pending = self._pending, []
         box = self.output
         if box is None:
             return
-        box.configure(state="normal")
+        raw = getattr(box, "_textbox", box)
+        at_bottom = raw.yview()[1] >= 0.995
         line = int(box.index("end-1c").split(".")[0]) + 1
-        prefix = "  " if kind == "link" else ""
-        box.insert("end", prefix + text + "\n", kind)
-        if kind == "link" and url:
-            box._link_map[line] = url
-        if kind == "section":
-            box.insert("end", "\n", "text")
+        box.configure(state="normal")
+        for kind, text in batch:
+            url = None
+            if kind == "kv":
+                label, _, value = text.partition("\t")
+                pad = max(2, 24 - len(label))
+                payload, tag = f"{label}{' ' * pad}{value}", "kv"
+            elif kind == "link":
+                label, _, url = text.partition("\t")
+                payload, tag = f"  {label}  {url}", "link"
+            else:
+                payload, tag = text, kind
+            box.insert("end", payload + "\n", tag)
+            if url:
+                box._link_map[line] = url
+            line += 1
+            if kind == "section":
+                box.insert("end", "\n", "text")
+                line += 1
         box.configure(state="disabled")
-        box.see("end")
-
-    def _emit_line(self, kind: str, text: str) -> None:
-        if kind == "kv":
-            label, _, value = text.partition("\t")
-            pad = max(2, 24 - len(label))
-            self._append("kv", f"{label}{' ' * pad}{value}")
-        elif kind == "link":
-            label, _, url = text.partition("\t")
-            self._append("link", f"{label}  {url}", url=url)
-        else:
-            self._append(kind, text)
+        if at_bottom:
+            box.see("end")
 
     def _record(self, kind: str, text: str) -> None:
         self.current_lines.append((kind, text))
 
     def _clear_output(self) -> None:
         self.current_lines.clear()
+        self._pending.clear()
+        if self._flush_job is not None:
+            try:
+                self.after_cancel(self._flush_job)
+            except Exception:
+                pass
+            self._flush_job = None
         if self.output is None:
             return
         self.output._link_map.clear()
@@ -815,7 +845,10 @@ class NullTraceApp(ctk.CTk):
             if self.runner.running:
                 self._set_output_status(f"running · {time.time() - self.started:0.1f}s",
                                         theme.WARN)
-                self._tick_job = self.after(400, tick)
+                # the worker disables automatic GC so Tk finalisers never run
+                # off-thread; reclaim garbage here instead
+                gc.collect()
+                self._tick_job = self.after(1000, tick)
         self._tick_job = self.after(400, tick)
 
     def _poll_queue(self) -> None:
@@ -835,9 +868,12 @@ class NullTraceApp(ctk.CTk):
         elif event.kind == "status":
             self._set_output_status(event.payload.get("text", ""), theme.MUTED)
         elif event.kind == "done":
+            self._flush_pending()
             self._finish(event.payload.get("status", "ok"))
 
     def _finish(self, status: str) -> None:
+        gc.enable()
+        gc.collect()
         self.run_button.configure(state="normal", text="Run scan")
         self.stop_button.configure(state="disabled")
         if self._tick_job:
@@ -1067,6 +1103,7 @@ class NullTraceApp(ctk.CTk):
         for kind, text in record["lines"]:
             self._record(kind, text)
             self._emit_line(kind, text)
+        self._flush_pending()
 
     def _delete_history(self, scan_id: int) -> None:
         delete_scan(scan_id)
@@ -1079,6 +1116,23 @@ class NullTraceApp(ctk.CTk):
         self._show_history()
 
     # ------------------------------------------------------------------ lifecycle
+    def report_callback_exception(self, exc_type, exc_value, exc_tb) -> None:
+        """Keep the app alive when a widget callback raises, and log the reason."""
+        import traceback
+
+        from ..crashlog import write
+
+        text = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        write(f"UI callback error:\n{text}")
+        try:
+            self._toast("Something went wrong — details saved to crash.log", "err")
+        except Exception:
+            pass
+        try:
+            sys.stderr.write(text)
+        except Exception:
+            pass
+
     def _on_close(self) -> None:
         if self.runner.running:
             if not messagebox.askyesno(APP_NAME, "A scan is running. Quit anyway?"):

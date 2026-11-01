@@ -6,6 +6,7 @@ import ipaddress
 import re
 import socket
 import ssl
+import threading
 from typing import Any
 from urllib.parse import urlparse
 
@@ -39,7 +40,16 @@ def new_session() -> requests.Session:
     return session
 
 
-SESSION = new_session()
+_local = threading.local()
+
+
+def session_for_thread() -> requests.Session:
+    """One pooled session per thread: requests.Session is not thread-safe."""
+    session = getattr(_local, "session", None)
+    if session is None:
+        session = new_session()
+        _local.session = session
+    return session
 
 
 class HttpError(Exception):
@@ -49,7 +59,7 @@ class HttpError(Exception):
 def http(url: str, *, method: str = "GET", timeout: float | None = None,
          session: requests.Session | None = None, allow_status: tuple[int, ...] = (),
          proxy: str | None = None, **kwargs: Any) -> requests.Response:
-    client = session or SESSION
+    client = session or session_for_thread()
     proxies = {"http": proxy, "https": proxy} if proxy else None
     try:
         response = client.request(

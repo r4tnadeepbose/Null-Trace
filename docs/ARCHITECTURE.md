@@ -87,10 +87,36 @@ implements `text`, `multiline`, `choice`, `checkbox` and `file` inputs.
 - The Tk main loop owns all widgets. Nothing else may touch them.
 - `JobRunner.start()` spawns a daemon thread; the module emits `Event` objects
   into a `queue.Queue`.
-- The GUI polls that queue every 80 ms in `_poll_queue` and renders events.
+- The GUI drains that queue every 80 ms and draws the lines in batches, so a
+  scan that emits thousands of rows cannot flood the widget queue.
 - `Stop` sets a `threading.Event`; modules call `ctx.check_cancel()` between
   network steps and `ctx.sleep()` for interruptible waits.
 - History is written once, on the worker's completion event.
+
+**Two rules keep the UI alive:**
+
+1. *Automatic garbage collection is disabled on the worker thread.* A Tk object
+   finaliser running off the UI thread issues a Tcl call and deadlocks against
+   the main loop — this was the cause of scans freezing. The UI thread runs
+   `gc.collect()` once a second while a job is active and re-enables GC when it
+   finishes.
+2. *Tk widgets are never touched from a module.* Modules only call `ctx.*`,
+   which appends to a queue.
+
+### Concurrency
+
+`nulltrace/parallel.py` provides `map_parallel`: bounded batches (2048 tasks)
+through a thread pool sized to the workload, with early stop and progress
+callbacks. Port scanning, DNS resolution and username probing use it.
+
+Each thread gets its own pooled `requests.Session` (`net.session_for_thread`) —
+a shared session is not thread-safe.
+
+There is no C or C++ extension. The work is network-bound: time is spent
+waiting on sockets and DNS, not executing Python, so a C implementation would
+add a build dependency for no measurable gain. The speed-ups come from more
+work in flight (512 connect workers instead of 100) and from removing the
+deadlock above.
 
 ## Failure behaviour
 
@@ -107,6 +133,7 @@ pane with a short traceback, and marked as a failed run in history.
 | `%APPDATA%\Null-Trace\history.db` | sqlite: module, target, times, status, rendered lines |
 | `%APPDATA%\Null-Trace\kev.json` | CISA KEV cache (24 h) |
 | `%APPDATA%\Null-Trace\rdap_dns.json` | IANA RDAP bootstrap cache (7 days) |
+| `%APPDATA%\Null-Trace\crash.log` | uncaught exceptions and hard faults, rotated at 1 MB |
 
 The folder was renamed from `NullTrace`; on first launch the old directory is
 moved automatically, or reused if a running instance still holds the sqlite file.

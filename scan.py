@@ -135,6 +135,10 @@ def main(argv: list[str] | None = None) -> int:
               "Debian/Ubuntu: sudo apt install python3-tk", file=sys.stderr)
         return 1
 
+    from nulltrace.crashlog import enable_faulthandler, install_excepthook
+    enable_faulthandler()
+    install_excepthook()
+
     from nulltrace.gui.app import main as gui_main
     gui_main()
     return 0
