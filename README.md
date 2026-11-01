@@ -5,8 +5,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-7fa0c4.svg)](https://www.python.org/downloads/)
 
 Open-source intelligence workbench — a desktop application, written in Python, that
-consolidates the recon tools from the classic X-osint terminal framework into one
-dark, local-first GUI.
+consolidates 40 recon tools into one dark, local-first GUI.
 
 **Built by Ratnadeep Bose** · [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose)
 
@@ -93,9 +92,16 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Network | DNS Lookup | A/AAAA/MX/TXT/NS/CNAME/SOA/CAA/SRV, subdomain probe | — |
 | Network | DNS Reverse | PTR records for an IP | — |
 | Network | Port Scan | Threaded TCP scan, banners, Shodan InternetDB cross-check | — |
+| Network | DNS Propagation | Same record asked of five public resolvers, compared | — |
+| Network | BGP / ASN | AS holder, announced prefixes and upstreams (RIPE Stat) | — |
+| Network | IP Reputation | Six DNS blocklists, with the reason for each listing | — |
+| Network | Reverse IP | Domains sharing an address, from passive DNS | — |
 | Network | MAC Vendor | OUI lookup, randomised/multicast address detection | — |
 | Network | Network Map | Traceroute with city/ASN per hop | — |
 | Web | WHOIS / RDAP | Registrar, dates, statuses, nameservers, contacts (no key) | — |
+| Web | TLS Inspector | Subject, issuer, SANs, expiry countdown, chain verification | — |
+| Web | Wayback | Archived snapshots from the Internet Archive CDX index | — |
+| Web | Site Files | robots.txt, sitemap, security.txt, ads.txt parsed | — |
 | Web | URL Inspector | Redirect chains, short-link expansion, phishing signals | — |
 | Web | Host Search | Headers, TLS cert, tech fingerprints, exposed paths | — |
 | Web | Subdomains | crt.sh, HackerTarget, optional brute force | — |
@@ -114,6 +120,7 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Vulnerability | CVE / Exploits | NVD search + CISA KEV flagging | — |
 | Media | Metadata | EXIF/XMP/document tags, GPS extraction | — |
 | Media | Hash Lookup | MD5/SHA1/SHA256, file-type heuristics, VirusTotal | VirusTotal |
+| Media | File Triage | Entropy, header type, strings, URLs/IPs/emails in a sample | — |
 | Media | Image Search | Hashes, Google Lens/Yandex/TinEye links, Google CSE | CSE |
 | Media | VIN Decoder | NHTSA vPIC decode + check-digit validation | — |
 | System | Wi-Fi | Nearby networks, saved profiles, password + QR | — |

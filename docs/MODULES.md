@@ -1,18 +1,25 @@
 # Module reference
 
-Generated from `nulltrace/modules/__init__.py` — 32 modules.
+Generated from `nulltrace/modules/__init__.py` — 40 modules.
 
 | Module | ID | Category | Inputs | API key |
 |---|---|---|---|---|
 | **Quick Recon** | `auto_recon` | Recon | target* | — |
 | **IP Intel** | `ip_info` | Network | target* | — |
 | **DNS Lookup** | `dns_lookup` | Network | domain*, rtype (choice), common (checkbox) | — |
+| **DNS Propagation** | `dns_propagation` | Network | domain*, rtype (choice) | — |
 | **DNS Reverse** | `dns_reverse` | Network | ip* | — |
 | **Port Scan** | `port_scan` | Network | host*, preset (choice), ports, timeout, banner (checkbox) | — |
+| **BGP / ASN** | `bgp_asn` | Network | query* | — |
+| **IP Reputation** | `dnsbl` | Network | ip* | — |
 | **MAC Vendor** | `mac_lookup` | Network | macs* (multiline) | — |
+| **Reverse IP** | `reverse_ip` | Network | ip* | — |
 | **Network Map** | `netmap` | Network | host*, hops, geo (checkbox) | — |
 | **WHOIS / RDAP** | `whois_rdap` | Web | target* | — |
+| **TLS Inspector** | `tls_inspector` | Web | host*, port | — |
+| **Wayback** | `wayback` | Web | target*, limit | — |
 | **URL Inspector** | `url_inspector` | Web | url* | — |
+| **Site Files** | `site_files` | Web | target* | — |
 | **Host Search** | `host_search` | Web | target*, tls (checkbox) | — |
 | **Subdomains** | `subdomains` | Web | domain*, resolve (checkbox), brute (checkbox) | — |
 | **Google Dorks** | `dorks` | Web | domain*, terms, category (choice), engine (choice), limit | — |
@@ -30,6 +37,7 @@ Generated from `nulltrace/modules/__init__.py` — 32 modules.
 | **CVE / Exploits** | `cve_research` | Vulnerability | query*, severity (choice), limit | — |
 | **Metadata** | `metadata` | Media | path* (file) | — |
 | **Hash Lookup** | `hash_lookup` | Media | value* (file) | virustotal |
+| **File Triage** | `file_triage` | Media | path* (file) | — |
 | **VIN Decoder** | `vin` | Media | vin* | — |
 | **Image Search** | `image_search` | Media | target* (file) | google_cse_key, google_cse_cx |
 | **Wi-Fi** | `wifi` | System | mode (choice), profile | — |
@@ -53,6 +61,10 @@ Geolocation, ASN, reverse DNS, exposed ports and known CVEs for an IP or hostnam
 
 Query any record type (A/AAAA/MX/TXT/NS/CNAME/SOA/CAA/SRV) with optional subdomain probe.
 
+### DNS Propagation (`dns_propagation`)
+
+Ask five public resolvers for the same record and compare their answers.
+
 ### DNS Reverse (`dns_reverse`)
 
 Resolve an IP back to hostnames (PTR records and system resolver).
@@ -61,9 +73,21 @@ Resolve an IP back to hostnames (PTR records and system resolver).
 
 Multi-threaded TCP connect scan with service labels, banner grab and passive Shodan cross-check.
 
+### BGP / ASN (`bgp_asn`)
+
+Autonomous system holder, announced prefixes and upstreams, via RIPE Stat.
+
+### IP Reputation (`dnsbl`)
+
+Check an IPv4 address against six public DNS blocklists and list the reasons.
+
 ### MAC Vendor (`mac_lookup`)
 
 Resolve MAC addresses to manufacturers, and flag randomised or multicast addresses.
+
+### Reverse IP (`reverse_ip`)
+
+Domains hosted on the same address, from a passive reverse-IP index.
 
 ### Network Map (`netmap`)
 
@@ -73,9 +97,21 @@ Traceroute to a target with city/country/ASN lookup for every responding hop.
 
 Domain or IP registration data: registrar, dates, statuses, nameservers and contacts.
 
+### TLS Inspector (`tls_inspector`)
+
+Certificate subject, issuer, SANs, expiry countdown and whether the chain verifies.
+
+### Wayback (`wayback`)
+
+Archived snapshots of a URL or domain from the Internet Archive CDX index.
+
 ### URL Inspector (`url_inspector`)
 
 Expand short links, follow the redirect chain, and flag homograph or phishing patterns.
+
+### Site Files (`site_files`)
+
+robots.txt, sitemap.xml, security.txt, humans.txt and ads.txt, parsed into a summary.
 
 ### Host Search (`host_search`)
 
@@ -144,6 +180,10 @@ Read EXIF/XMP/document metadata, highlight device fingerprints and extract GPS c
 ### Hash Lookup (`hash_lookup`)
 
 MD5/SHA1/SHA256 for a file or text, file-type heuristics and VirusTotal reputation.
+
+### File Triage (`file_triage`)
+
+Entropy, header type, printable strings and URL/IP/email indicators in a suspicious file.
 
 ### VIN Decoder (`vin`)
 
