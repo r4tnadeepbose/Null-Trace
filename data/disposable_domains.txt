@@ -1,0 +1,14 @@
+# Known disposable / temporary email providers.
+# One domain per line. Lines starting with # are ignored.
+mailinator.com
+guerrillamail.com
+10minutemail.com
+tempmail.com
+yopmail.com
+trashmail.com
+sharklasers.com
+getnada.com
+dispostable.com
+throwawaymail.com
+maildrop.cc
+mytemp.email

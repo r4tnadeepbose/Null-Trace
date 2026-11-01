@@ -1,5 +1,9 @@
 # Null-Trace
 
+[![CI](https://github.com/r4tnadeepbose/Null-Trace/actions/workflows/ci.yml/badge.svg)](https://github.com/r4tnadeepbose/Null-Trace/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-7fa0c4.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-7fa0c4.svg)](https://www.python.org/downloads/)
+
 Open-source intelligence workbench — a desktop application, written in Python, that
 consolidates the recon tools from the classic X-osint terminal framework into one
 dark, local-first GUI.
@@ -148,6 +152,36 @@ ever sent to the provider that issued them.
 Modules that need a key you have not set still run — they print what is skipped and
 continue with the free sources.
 
+## Project layout
+
+```
+Null-Trace/
+├── .github/      CI workflow, issue forms, security policy
+├── assets/       logo and banner (SVG)
+├── data/         wordlists and dork catalogue, editable without code changes
+├── docs/         architecture, module reference, configuration, development
+├── examples/     sample headers, config and exported output
+├── legal/        disclaimer, privacy, third-party notices
+├── nulltrace/    application package (gui, modules, transport, storage)
+├── packaging/    PyInstaller spec and Windows build script
+├── scripts/      developer checks
+├── tests/        offline unit tests
+├── scan.py       entry point (GUI and headless)
+├── LICENSE       MIT
+└── requirements.txt
+```
+
+## Testing
+
+```bash
+python -m unittest discover -s tests -v
+python scripts/dev_check.py          # compile + tests + inventory
+```
+
+The suite is offline: validators, the module registry, output formatting, config
+persistence, dataset loaders and the email-header analyser against a fixture.
+CI runs it on Windows for Python 3.11–3.13 on every push.
+
 ## Data & files
 
 | Path | Contents |
@@ -155,6 +189,7 @@ continue with the free sources.
 | `scan.py` | entry point (GUI and headless) |
 | `nulltrace/modules/` | one file per module |
 | `nulltrace/gui/` | application shell |
+| `data/` | reference lists loaded at runtime (with built-in fallbacks) |
 | `%APPDATA%\Null-Trace\config.json` | API keys and network settings |
 | `%APPDATA%\Null-Trace\history.db` | sqlite scan history |
 | `%APPDATA%\Null-Trace\wifi_qr.png` | last generated Wi-Fi QR code |
@@ -204,4 +239,14 @@ or have written permission to test may be a criminal offence. Breach and stealer
 often contains personal information; handle it under your jurisdiction's privacy law
 (GDPR, DPDP, CCPA, …). A finding is evidence of exposure — not proof of wrongdoing.
 
-You are solely responsible for how you use this.
+You are solely responsible for how you use this. See
+[legal/DISCLAIMER.md](legal/DISCLAIMER.md), [legal/PRIVACY.md](legal/PRIVACY.md) and
+[legal/THIRD_PARTY.md](legal/THIRD_PARTY.md).
+
+## License
+
+MIT © 2026 Ratnadeep Bose — see [LICENSE](LICENSE).
+
+You may use, modify and redistribute it, including commercially, provided the
+copyright notice and licence text stay with the software. It comes with no warranty.
+

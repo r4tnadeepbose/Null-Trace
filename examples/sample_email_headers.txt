@@ -1,0 +1,14 @@
+Received: from mail.example-sender.com (mail.example-sender.com [203.0.113.9])
+	by mx.google.com with ESMTPS id abc123
+	for <you@gmail.com>; Sun, 01 Nov 2026 10:00:05 -0800 (PST)
+Received: from laptop (unknown [198.51.100.77])
+	by mail.example-sender.com with ESMTPA id def456;
+	Sun, 01 Nov 2026 10:00:02 -0800
+Return-Path: <bounce@example-sender.com>
+From: "Example Bank" <alerts@example-bank.com>
+Reply-To: recover@example-bank-secure.com
+To: you@gmail.com
+Subject: Verify your account
+Date: Sun, 01 Nov 2026 10:00:00 -0800
+Message-ID: <abc@example-bank.com>
+Authentication-Results: mx.google.com; spf=fail smtp.mailfrom=example-sender.com; dkim=none; dmarc=fail header.from=example-bank.com

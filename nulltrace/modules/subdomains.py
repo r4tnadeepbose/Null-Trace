@@ -5,15 +5,17 @@ from __future__ import annotations
 import re
 from concurrent.futures import ThreadPoolExecutor
 
+from ..datasets import load_lines
 from ..job import Field, Module
 from ..net import HttpError, get_json, http, resolve
 
-BRUTE_WORDS = (
+_DEFAULT_BRUTE_WORDS = (
     "www", "mail", "remote", "blog", "webmail", "server", "ns1", "ns2", "smtp", "secure",
     "vpn", "api", "dev", "staging", "test", "portal", "admin", "app", "cdn", "static",
     "media", "support", "shop", "store", "docs", "git", "ci", "jenkins", "monitor", "status",
     "internal", "intranet", "db", "backup", "old", "beta", "demo", "qa", "uat", "m", "wap",
 )
+BRUTE_WORDS = tuple(load_lines("subdomain_words.txt", _DEFAULT_BRUTE_WORDS))
 
 
 def _crtsh(domain: str) -> set[str]:

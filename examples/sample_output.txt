@@ -1,0 +1,27 @@
+Null-Trace 1.0.0 — open-source intelligence workbench
+Module: IP Intel
+Exported: 2026-11-01 20:31:00
+------------------------------------------------------------------------
+IP Intel — 2026-11-01 20:30:58
+IP intelligence — 1.1.1.1
+Version                 IPv4
+Scope                   public
+Geolocation & network
+City                    Brisbane
+Region                  Queensland
+Country                 AU
+Postal                  9010
+Timezone                Australia/Brisbane
+Organisation            AS13335 Cloudflare, Inc.
+Hostname                one.one.one.one
+  Map  https://www.openstreetmap.org/?mlat=-27.4679&mlon=153.0281
+
+Reverse DNS
+  one.one.one.one
+
+Shodan InternetDB (free, no key)
+Open ports              53, 69, 80, 443, 2053, 2082, 2087, 2096, 8080, 8443, 8880
+Hostnames               hwp.huawei.com, gjest.kavli.no, one.one.one.one
+CPEs                    cpe:/a:cloudflare:cloudflare
+Tags                    pqc
+No known CVEs in Shodan's passive dataset.

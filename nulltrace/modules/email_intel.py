@@ -5,14 +5,16 @@ from __future__ import annotations
 import hashlib
 import re
 
+from ..datasets import load_lines
 from ..job import Field, Module
 from ..net import EMAIL_RE, HttpError, get_json, http
 
-DISPOSABLE = {
+_DEFAULT_DISPOSABLE = {
     "mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com",
     "yopmail.com", "trashmail.com", "sharklasers.com", "getnada.com",
     "dispostable.com", "throwawaymail.com", "maildrop.cc", "mytemp.email",
 }
+DISPOSABLE = set(load_lines("disposable_domains.txt", _DEFAULT_DISPOSABLE))
 
 PROVIDERS = {
     "gmail.com": "Google", "googlemail.com": "Google", "outlook.com": "Microsoft",

@@ -42,6 +42,7 @@ def run(ctx) -> None:
     ctx.note("X-osint tool. Data providers: ipinfo.io, ip-api.com, Shodan InternetDB,")
     ctx.note("NVD, CISA, crt.sh, HackerTarget, Hudson Rock, Ahmia, NHTSA, GitHub,")
     ctx.note("Google News.")
+    ctx.note("Released under the MIT licence, © 2026 Ratnadeep Bose.")
 
 
 MODULE = Module(

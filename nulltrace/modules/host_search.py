@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from ..datasets import load_json
 from ..job import Field, Module
 from ..net import HttpError, http, serve_url, tls_certificate
 
@@ -16,7 +17,7 @@ SECURITY_HEADERS = {
     "permissions-policy": "No Permissions-Policy — browser features unrestricted",
 }
 
-TECH_SIGNATURES = {
+_DEFAULT_TECH_SIGNATURES = {
     "cloudflare": "Cloudflare", "nginx": "Nginx", "apache": "Apache", "iis": "Microsoft IIS",
     "litespeed": "LiteSpeed", "openresty": "OpenResty", "caddy": "Caddy",
     "express": "Express.js", "next.js": "Next.js", "nuxt": "Nuxt", "react": "React",
@@ -28,6 +29,7 @@ TECH_SIGNATURES = {
     "google analytics": "Google Analytics", "gtag": "Google Tag", "hotjar": "Hotjar",
     "hubspot": "HubSpot", "sentry": "Sentry", "stripe": "Stripe", "recaptcha": "reCAPTCHA",
 }
+TECH_SIGNATURES = load_json("tech_signatures.json", _DEFAULT_TECH_SIGNATURES)
 
 
 def run(ctx) -> None:

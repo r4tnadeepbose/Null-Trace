@@ -1,0 +1,14 @@
+# Terms that raise the risk score in the URL Inspector.
+login
+verify
+secure
+update
+account
+billing
+wallet
+unlock
+recover
+confirm
+invoice
+signin
+auth

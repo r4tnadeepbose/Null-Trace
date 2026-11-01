@@ -1,6 +1,17 @@
 .venv/
 __pycache__/
 *.pyc
+*.pyo
 _shots/
 *.db
 .DS_Store
+Thumbs.db
+
+# packaging output
+build/
+dist/
+*.zip
+
+# local scans and exports
+nulltrace-*.txt
+*.log

@@ -1,0 +1,37 @@
+name: Feature request
+description: Suggest a module, a data source or a UI improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the investigation you were doing when you hit the gap.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Area
+      options:
+        - New module
+        - Existing module
+        - Dashboard / UI
+        - Data files
+        - Docs
+        - Packaging
+    validations:
+      required: true
+  - type: checkboxes
+    id: lawful
+    attributes:
+      label: Scope check
+      options:
+        - label: This feature works on public or authorised data only
+          required: true

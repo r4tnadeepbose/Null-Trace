@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import urllib.parse
 
+from ..datasets import load_json
 from ..job import Field, Module
 
 ENGINES = {
@@ -12,7 +13,7 @@ ENGINES = {
     "DuckDuckGo": "https://duckduckgo.com/?q={q}",
 }
 
-CATALOG: dict[str, list[str]] = {
+_DEFAULT_CATALOG: dict[str, list[str]] = {
     "Exposed documents": [
         'site:{d} ext:pdf', 'site:{d} ext:xlsx OR ext:xls OR ext:csv',
         'site:{d} ext:docx OR ext:doc', 'site:{d} ext:pptx OR ext:ppt',
@@ -46,6 +47,7 @@ CATALOG: dict[str, list[str]] = {
         'site:{d} inurl:api', 'site:{d} inurl:internal',
     ],
 }
+CATALOG: dict[str, list[str]] = load_json("dorks.json", _DEFAULT_CATALOG)
 
 
 def _clean_domain(value: str) -> str:

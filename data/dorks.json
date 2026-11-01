@@ -1,0 +1,49 @@
+{
+  "Exposed documents": [
+    "site:{d} ext:pdf",
+    "site:{d} ext:xlsx OR ext:xls OR ext:csv",
+    "site:{d} ext:docx OR ext:doc",
+    "site:{d} ext:pptx OR ext:ppt",
+    "site:{d} intitle:\"index of\"",
+    "site:{d} inurl:backup"
+  ],
+  "Config & secrets": [
+    "site:{d} ext:env OR ext:ini OR ext:cfg",
+    "site:{d} inurl:.git/config",
+    "site:{d} \"BEGIN RSA PRIVATE KEY\"",
+    "site:{d} intext:\"api_key\" OR intext:\"apikey\"",
+    "site:{d} intext:\"password\" filetype:txt"
+  ],
+  "Admin & login panels": [
+    "site:{d} inurl:admin",
+    "site:{d} inurl:login OR inurl:signin",
+    "site:{d} intitle:\"dashboard\"",
+    "site:{d} inurl:phpmyadmin",
+    "site:{d} intitle:\"phpMyAdmin\" OR intitle:\"Adminer\""
+  ],
+  "Devices & cameras": [
+    "inurl:\"/view/index.shtml\"",
+    "intitle:\"Network Camera\" inurl:view",
+    "inurl:8080 intitle:\"DVR\"",
+    "intitle:\"webcamXP\""
+  ],
+  "People & contacts": [
+    "site:{d} \"@{d}\"",
+    "site:linkedin.com \"{d}\"",
+    "site:github.com \"{d}\"",
+    "site:{d} intext:\"@gmail.com\""
+  ],
+  "Vulnerable stacks": [
+    "site:{d} intitle:\"Jenkins\"",
+    "site:{d} inurl:wp-content",
+    "site:{d} intitle:\"Grafana\"",
+    "site:{d} intitle:\"Kibana\"",
+    "site:{d} \"Index of /\" intext:\"Parent Directory\""
+  ],
+  "Subdomains & staging": [
+    "site:*.{d} -site:www.{d}",
+    "site:{d} inurl:staging OR inurl:dev OR inurl:test",
+    "site:{d} inurl:api",
+    "site:{d} inurl:internal"
+  ]
+}

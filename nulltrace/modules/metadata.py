@@ -59,19 +59,27 @@ def _pil_exif(path: Path) -> dict:
     return out
 
 
+def _ratio(value) -> float:
+    """EXIF stores rationals as (numerator, denominator) pairs."""
+    if isinstance(value, (tuple, list)) and len(value) == 2:
+        numerator, denominator = value
+        return float(numerator) / float(denominator) if denominator else 0.0
+    return float(value)
+
+
 def _dms_to_decimal(value) -> float | None:
     try:
-        if isinstance(value, (int, float)):
-            return float(value)
         if isinstance(value, str):
             parts = value.replace(",", " ").split()
             return float(parts[0])
+        if isinstance(value, (int, float)):
+            return float(value)
         parts = list(value)
-        degrees = float(parts[0])
-        minutes = float(parts[1]) if len(parts) > 1 else 0.0
-        seconds = float(parts[2]) if len(parts) > 2 else 0.0
+        degrees = _ratio(parts[0])
+        minutes = _ratio(parts[1]) if len(parts) > 1 else 0.0
+        seconds = _ratio(parts[2]) if len(parts) > 2 else 0.0
         return degrees + minutes / 60.0 + seconds / 3600.0
-    except (TypeError, ValueError, IndexError):
+    except (TypeError, ValueError, IndexError, ZeroDivisionError):
         return None
 
 

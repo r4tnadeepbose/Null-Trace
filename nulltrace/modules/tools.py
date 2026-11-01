@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from ..config import CONFIG, CONFIG_PATH, KEY_LABELS, data_dir
+from ..datasets import reloadable
 from ..job import Field, Module
 from ..version import VERSION
 
@@ -47,6 +48,14 @@ def _environment(ctx) -> None:
     for module, label in OPTIONAL:
         found = importlib.util.find_spec(module) is not None
         (ctx.ok if found else ctx.muted)(f"  {label:<20} {'present' if found else 'optional, missing'}")
+
+    ctx.section("Reference data")
+    data_files = reloadable()
+    ctx.kv("Data files", len(data_files))
+    for name in data_files:
+        ctx.text(f"  {name}")
+    if not data_files:
+        ctx.muted("  data/ folder not found — modules are using built-in defaults")
 
     ctx.section("External tools")
     for tool, hint in (

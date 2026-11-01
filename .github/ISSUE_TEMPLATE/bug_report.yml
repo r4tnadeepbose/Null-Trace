@@ -1,0 +1,64 @@
+name: Bug report
+description: Something broke, misbehaved or crashed
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do **not** paste API keys, private scan
+        output or other people's personal data.
+  - type: input
+    id: version
+    attributes:
+      label: Null-Trace version
+      description: Shown in the sidebar and in `python scan.py --version`
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: module
+    attributes:
+      label: Module
+      description: Which tool was running? e.g. DNS Lookup, Port Scan, Exposure Audit
+      placeholder: IP Intel
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open Null-Trace
+        2. Select ...
+        3. Enter ...
+        4. Click Run scan
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include the error line from the output pane, with secrets removed.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment details
+      description: Output of Toolkit → Environment check, with paths redacted if needed.
+      render: text

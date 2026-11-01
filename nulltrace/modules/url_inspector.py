@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 
+from ..datasets import load_lines
 from ..job import Field, Module
 from ..net import HttpError, http, resolve, serve_url, tls_certificate
 
@@ -12,8 +13,9 @@ SHORTENERS = {
     "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "rebrand.ly",
     "cutt.ly", "shorturl.at", "rb.gy", "tiny.cc", "lnkd.in", "bit.do", "soo.gd",
 }
-SUSPICIOUS = ("login", "verify", "secure", "update", "account", "billing", "wallet",
-              "unlock", "recover", "confirm", "invoice", "signin", "auth")
+_DEFAULT_SUSPICIOUS = ("login", "verify", "secure", "update", "account", "billing",
+                       "wallet", "unlock", "recover", "confirm", "invoice", "signin", "auth")
+SUSPICIOUS = tuple(load_lines("suspicious_terms.txt", _DEFAULT_SUSPICIOUS))
 
 
 def _looks_punycode(host: str) -> bool:
