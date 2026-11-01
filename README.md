@@ -88,6 +88,7 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 
 | Category | Module | What it does | Key needed |
 |---|---|---|---|
+| Recon | **Quick Recon** | One input — domain, IP, email, phone, VIN, hash or username — swept across the matching modules with a findings summary | — |
 | Network | IP Intel | Geolocation, ASN, PTR, open ports, CVEs | — |
 | Network | DNS Lookup | A/AAAA/MX/TXT/NS/CNAME/SOA/CAA/SRV, subdomain probe | — |
 | Network | DNS Reverse | PTR records for an IP | — |
@@ -123,6 +124,14 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 The app opens on a **dashboard**: run counters, quick-start tiles, recent scans, a
 searchable list of every module, environment status and key coverage. The sidebar
 filter (`Ctrl+F`) narrows the module list as you type.
+
+**Quick Recon** is the fast path: press the red button in the sidebar, paste a
+domain, IP, email, phone, VIN, hash or username, and the matching modules run in
+sequence with a findings summary at the end.
+
+**Window chrome**: the top bar carries the workspace views (Dashboard, History,
+Settings) plus a light/dark switch and a fullscreen toggle (`F11`). The theme is
+remembered between launches; light mode is white with black borders.
 
 Press **Run scan** (or `Ctrl+Enter`). Results stream into the output pane; click any
 underlined link to open it in your browser. `Ctrl+S` exports the current output to a

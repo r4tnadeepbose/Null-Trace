@@ -43,6 +43,7 @@ class FieldWidget:
 
 class NullTraceApp(ctk.CTk):
     def __init__(self) -> None:
+        theme.apply(CONFIG.get("ui", "appearance", "dark"))
         super().__init__(fg_color=theme.BG)
         self._set_window_icon()
         self.title(f"{APP_NAME.upper()}  //  OSINT WORKBENCH")
@@ -68,6 +69,7 @@ class NullTraceApp(ctk.CTk):
         self._flush_job = None
         self._pending: list[tuple[str, str]] = []
         self._toast_widget = None
+        self._brand_image = None
 
         self._build_shell()
         self._render_nav()
@@ -77,81 +79,214 @@ class NullTraceApp(ctk.CTk):
         self.bind("<Control-Return>", lambda _e: self._run())
         self.bind("<Control-s>", lambda _e: self._export())
         self.bind("<Control-f>", lambda _e: self.search_entry.focus_set())
+        self.bind("<F11>", lambda _e: self._toggle_fullscreen())
         self.after(200, self._poll_queue)
 
     # ------------------------------------------------------------------ shell
+    def _brand_photo(self):
+        """Wordmark drawn with a soft red halo, like a tube that never quite focused."""
+        try:
+            from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageTk
+        except Exception:
+            return None
+        text = "Null-Trace"
+        font = None
+        for candidate in (r"C:\Windows\Fonts\consola.ttf", "consola.ttf",
+                          "DejaVuSansMono.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"):
+            try:
+                font = ImageFont.truetype(candidate, 27)
+                break
+            except Exception:
+                continue
+        if font is None:
+            return None
+        probe = ImageDraw.Draw(Image.new("RGBA", (10, 10)))
+        box = probe.textbbox((0, 0), text, font=font)
+        width, height = box[2] - box[0], box[3] - box[1]
+        pad = 14
+        canvas = Image.new("RGBA", (width + pad * 2, height + pad * 2), (0, 0, 0, 0))
+
+        glow_alpha = "55" if theme.is_light() else "e6"
+        ghost_alpha = "33" if theme.is_light() else "88"
+        glow = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        ImageDraw.Draw(glow).text((pad, pad), text, font=font, fill=theme.ACCENT + glow_alpha)
+        glow = glow.filter(ImageFilter.GaussianBlur(6))
+        canvas.alpha_composite(glow)
+        canvas.alpha_composite(glow, (1, 1))
+
+        ghost = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+        ImageDraw.Draw(ghost).text((pad + 1, pad), text, font=font, fill=theme.ACCENT + ghost_alpha)
+        canvas.alpha_composite(ghost.filter(ImageFilter.GaussianBlur(2)))
+
+        ImageDraw.Draw(canvas).text((pad, pad), text, font=font, fill=theme.TEXT)
+        return ctk.CTkImage(light_image=canvas, dark_image=canvas,
+                            size=(canvas.width, canvas.height))
+
     def _build_shell(self) -> None:
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        sidebar = ctk.CTkFrame(self, width=248, corner_radius=0, fg_color=theme.PANEL)
+        sidebar = ctk.CTkFrame(self, width=252, corner_radius=0, fg_color=theme.PANEL)
         sidebar.grid(row=0, column=0, sticky="nsew")
         sidebar.grid_propagate(False)
-        sidebar.grid_rowconfigure(2, weight=1)
+        sidebar.grid_rowconfigure(3, weight=1)
         sidebar.grid_columnconfigure(0, weight=1)
 
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
-        brand.grid(row=0, column=0, sticky="ew", padx=18, pady=(16, 10))
-        ctk.CTkFrame(brand, height=2, fg_color=theme.RED).pack(fill="x", pady=(0, 12))
-        mark = ctk.CTkFrame(brand, fg_color="transparent")
-        mark.pack(fill="x")
-        ctk.CTkLabel(mark, text="▌", font=theme.font(22, "bold"), text_color=theme.RED,
-                     anchor="w").pack(side="left")
-        ctk.CTkLabel(mark, text=APP_NAME.upper(), font=theme.font(22, "bold"),
-                     text_color=theme.TEXT, anchor="w").pack(side="left", padx=(2, 0))
-        ctk.CTkLabel(brand, text=TAGLINE.upper(), font=theme.font(9),
-                     text_color=theme.FAINT, anchor="w").pack(fill="x", pady=(2, 0))
-        meta = ctk.CTkFrame(brand, fg_color="transparent")
-        meta.pack(fill="x", pady=(8, 0))
-        ctk.CTkLabel(meta, text=f"v{VERSION}", font=theme.font(9),
-                     text_color=theme.ACCENT).pack(side="left")
-        credit = ctk.CTkLabel(meta, text=f"·  by {AUTHOR}", font=theme.font(9),
-                              text_color=theme.FAINT)
-        credit.pack(side="left", padx=(6, 0))
-        credit.bind("<Button-1>", lambda _e: webbrowser.open(GITHUB))
-        credit.configure(cursor="hand2")
+        brand.grid(row=0, column=0, sticky="ew", padx=20, pady=(18, 6))
+        self._brand_image = self._brand_photo()
+        if self._brand_image is not None:
+            ctk.CTkLabel(brand, text="", image=self._brand_image, anchor="w").pack(anchor="w")
+        else:
+            ctk.CTkLabel(brand, text="Null-Trace", font=theme.font(24, "bold"),
+                         text_color=theme.TEXT, anchor="w").pack(anchor="w")
+        ctk.CTkLabel(brand, text="OPEN-SOURCE INTELLIGENCE WORKBENCH",
+                     font=theme.font(8), text_color=theme.FAINT, anchor="w"
+                     ).pack(anchor="w", pady=(2, 0))
 
         self.search_entry = ctk.CTkEntry(
-            sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32, corner_radius=theme.RADIUS,
-            fg_color=theme.BG, border_color=theme.BORDER_SOFT, text_color=theme.TEXT,
+            sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32,
+            corner_radius=theme.RADIUS, fg_color=theme.BG,
+            border_color=theme.BORDER_SOFT, text_color=theme.TEXT,
             placeholder_text_color=theme.FAINT, font=theme.font(11))
-        self.search_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
+        self.search_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(10, 8))
         self.search_entry.bind("<KeyRelease>",
                                lambda _e: self._render_nav(self.search_entry.get()))
         self.search_entry.bind(
             "<Escape>",
             lambda _e: (self.search_entry.delete(0, "end"), self._render_nav()))
 
+        ctk.CTkButton(
+            sidebar, text=">>  QUICK RECON", height=38, corner_radius=theme.RADIUS,
+            fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
+            text_color=theme.ON_ACCENT, font=theme.font(12, "bold"),
+            command=lambda: self._select_module("auto_recon")
+        ).grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 10))
+
         self.nav_scroll = ctk.CTkScrollableFrame(
             sidebar, fg_color="transparent", corner_radius=0,
-            scrollbar_button_color=theme.ELEV, scrollbar_button_hover_color=theme.BORDER)
-        self.nav_scroll.grid(row=2, column=0, sticky="nsew", padx=(10, 4), pady=(0, 4))
+            scrollbar_button_color=theme.ELEV,
+            scrollbar_button_hover_color=theme.BORDER)
+        self.nav_scroll.grid(row=3, column=0, sticky="nsew", padx=(10, 4), pady=(0, 4))
         self.nav_scroll.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkFrame(sidebar, height=1, fg_color=theme.BORDER).grid(
-            row=3, column=0, sticky="ew", padx=14, pady=(2, 0))
+        ctk.CTkFrame(sidebar, height=1, fg_color=theme.BORDER_SOFT).grid(
+            row=4, column=0, sticky="ew", padx=16, pady=(4, 0))
 
-        footer = ctk.CTkFrame(sidebar, fg_color=theme.BG, corner_radius=0)
-        footer.grid(row=4, column=0, sticky="ew", padx=0, pady=(0, 0))
-        inner_footer = ctk.CTkFrame(footer, fg_color="transparent")
-        inner_footer.pack(fill="x", padx=12, pady=(8, 12))
-        ctk.CTkLabel(inner_footer, text="WORKSPACE", anchor="w",
-                     font=theme.font(9, "bold"),
-                     text_color=theme.FAINT).pack(fill="x", padx=6, pady=(0, 4))
-        for label, target in (("Dashboard", "dashboard"), ("History", "history"),
-                              ("Settings", "settings")):
-            ctk.CTkButton(inner_footer, text=label.upper(), height=32, corner_radius=theme.RADIUS, anchor="w",
-                          fg_color="transparent", hover_color=theme.ELEV,
-                          text_color=theme.MUTED, font=theme.font(12),
-                          command=lambda t=target: self._navigate(t)).pack(fill="x", pady=1)
-        ctk.CTkLabel(inner_footer, text="LOCAL ONLY · REQUESTS GO UPSTREAM",
-                     font=theme.font(9), text_color=theme.FAINT,
-                     anchor="w").pack(fill="x", padx=6, pady=(8, 0))
+        meta = ctk.CTkFrame(sidebar, fg_color="transparent")
+        meta.grid(row=5, column=0, sticky="ew", padx=16, pady=(8, 14))
+        ctk.CTkLabel(meta, text=f"v{VERSION}  ·  MIT", font=theme.font(9),
+                     text_color=theme.FAINT, anchor="w").pack(fill="x")
+        credit = ctk.CTkLabel(meta, text=f"by {AUTHOR}", font=theme.font(9),
+                              text_color=theme.FAINT, anchor="w")
+        credit.pack(fill="x")
+        credit.bind("<Button-1>", lambda _e: webbrowser.open(GITHUB))
+        credit.configure(cursor="hand2")
 
-        self.body = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0)
-        self.body.grid(row=0, column=1, sticky="nsew")
+        right = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0)
+        right.grid(row=0, column=1, sticky="nsew")
+        right.grid_columnconfigure(0, weight=1)
+        right.grid_rowconfigure(1, weight=1)
+
+        topbar = ctk.CTkFrame(right, fg_color=theme.BG, corner_radius=0, height=52)
+        topbar.grid(row=0, column=0, sticky="ew", padx=26, pady=(8, 0))
+        topbar.grid_columnconfigure(0, weight=1)
+        topbar.grid_propagate(False)
+
+        self.crumb = ctk.CTkLabel(topbar, text="DASHBOARD", anchor="w",
+                                  font=theme.font(9, "bold"), text_color=theme.FAINT)
+        self.crumb.grid(row=0, column=0, sticky="w")
+
+        controls = ctk.CTkFrame(topbar, fg_color="transparent")
+        controls.grid(row=0, column=1, sticky="e")
+        self.view_buttons: dict[str, ctk.CTkButton] = {}
+        for label, target in (("DASHBOARD", "dashboard"), ("HISTORY", "history"),
+                              ("SETTINGS", "settings")):
+            button = ctk.CTkButton(
+                controls, text=label, height=28, width=88, corner_radius=theme.RADIUS,
+                fg_color="transparent", hover_color=theme.ELEV, text_color=theme.MUTED,
+                font=theme.font(10, "bold"),
+                command=lambda t=target: self._navigate(t))
+            button.pack(side="left", padx=(0, 2))
+            self.view_buttons[target] = button
+
+        ctk.CTkLabel(controls, text="|", text_color=theme.FAINT,
+                     font=theme.font(11)).pack(side="left", padx=8)
+
+        self.theme_button = ctk.CTkButton(
+            controls, text="BLACK MODE" if theme.is_light() else "WHITE MODE",
+            height=28, width=112, corner_radius=theme.RADIUS,
+            fg_color="transparent", border_width=1, border_color=theme.BORDER,
+            text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
+            command=self._toggle_theme)
+        self.theme_button.pack(side="left", padx=(0, 6))
+
+        self.full_button = ctk.CTkButton(
+            controls, text="FULLSCREEN", height=28, width=104, corner_radius=theme.RADIUS,
+            fg_color="transparent", border_width=1, border_color=theme.BORDER,
+            text_color=theme.TEXT, hover_color=theme.ELEV, font=theme.font(10),
+            command=self._toggle_fullscreen)
+        self.full_button.pack(side="left")
+
+        self.body = ctk.CTkFrame(right, fg_color=theme.BG, corner_radius=0)
+        self.body.grid(row=1, column=0, sticky="nsew")
         self.body.grid_columnconfigure(0, weight=1)
+
+    # ------------------------------------------------------------------ chrome
+    def _set_crumb(self, text: str) -> None:
+        if getattr(self, "crumb", None) is not None and self.crumb.winfo_exists():
+            self.crumb.configure(text=text.upper())
+
+    def _mark_view(self, target: str | None) -> None:
+        for name, button in getattr(self, "view_buttons", {}).items():
+            if name == target:
+                button.configure(text_color=theme.TEXT, fg_color=theme.ACCENT_DIM)
+            else:
+                button.configure(text_color=theme.MUTED, fg_color="transparent")
+
+    def _toggle_theme(self) -> None:
+        if self.runner.running:
+            self._toast("Stop the running job first", "warn")
+            return
+        mode = "light" if not theme.is_light() else "dark"
+        CONFIG.set("ui", "appearance", mode)
+        theme.apply(mode)
+        self._rebuild_ui()
+
+    def _toggle_fullscreen(self) -> None:
+        full = not bool(self.attributes("-fullscreen"))
+        self.attributes("-fullscreen", full)
+        if hasattr(self, "full_button") and self.full_button.winfo_exists():
+            self.full_button.configure(text="WINDOWED" if full else "FULLSCREEN")
+
+    def _rebuild_ui(self) -> None:
+        view, module_id = self.view, (self.current.id if self.current else None)
+        snapshot = list(self.current_lines)
+        status = self.output_status.cget("text") if self.output_status is not None else ""
+        for child in self.winfo_children():
+            child.destroy()
+        self._toast_widget = None
+        self._flush_job = None
+        self._pending = []
+        self._brand_image = None
+        self._build_shell()
+        self._render_nav(self.search_entry.get() if hasattr(self, "search_entry") else "")
+        if view == "module" and module_id:
+            self._select_module(module_id)
+            if snapshot:
+                self._clear_output()
+                for kind, text in snapshot:
+                    self._record(kind, text)
+                    self._emit_line(kind, text)
+                self._flush_pending()
+                self._set_output_status(status.replace("[ ", "").replace(" ]", "").lower())
+        elif view == "history":
+            self._show_history()
+        elif view == "settings":
+            self._show_settings()
+        else:
+            self._show_dashboard()
 
     # ------------------------------------------------------------------ nav
     def _render_nav(self, needle: str = "") -> None:
@@ -180,6 +315,7 @@ class NullTraceApp(ctk.CTk):
                 button.pack(fill="x", padx=2, pady=1)
                 self.nav_buttons[module.id] = button
                 shown += 1
+        ctk.CTkFrame(self.nav_scroll, height=8, fg_color="transparent").pack(fill="x")
         if not shown:
             ctk.CTkLabel(self.nav_scroll, text="No module matches that filter.",
                          font=theme.font(10), text_color=theme.FAINT,
@@ -189,7 +325,7 @@ class NullTraceApp(ctk.CTk):
     def _highlight_nav(self) -> None:
         for module_id, button in self.nav_buttons.items():
             if module_id == (self.current.id if self.current and self.view == "module" else None):
-                button.configure(fg_color=theme.ACCENT_DIM, text_color=theme.RED_BRIGHT,
+                button.configure(fg_color=theme.ACCENT_DIM, text_color=theme.ACCENT_HOVER,
                                  hover_color=theme.ELEV)
             else:
                 button.configure(fg_color="transparent", text_color=theme.MUTED,
@@ -283,6 +419,8 @@ class NullTraceApp(ctk.CTk):
     def _show_dashboard(self) -> None:
         self.view = "dashboard"
         self.current = None
+        self._set_crumb("dashboard")
+        self._mark_view("dashboard")
         self._clear_body()
         self._grid_rows({0: 0, 1: 0, 2: 1})
         self._highlight_nav()
@@ -503,6 +641,8 @@ class NullTraceApp(ctk.CTk):
             return
         self.current = module
         self.view = "module"
+        self._set_crumb(f"module / {module.title}")
+        self._mark_view(None)
         self._clear_body()
         self._grid_rows({0: 0, 1: 0, 2: 1})
         self._highlight_nav()
@@ -532,10 +672,11 @@ class NullTraceApp(ctk.CTk):
 
         actions = ctk.CTkFrame(card, fg_color="transparent")
         actions.grid(row=1, column=0, sticky="ew", padx=20, pady=(4, 16))
+        self._run_label = "RUN SWEEP" if module.id == "auto_recon" else "RUN SCAN"
         self.run_button = ctk.CTkButton(
-            actions, text="RUN SCAN", width=132, height=34, corner_radius=theme.RADIUS,
+            actions, text=self._run_label, width=140, height=34, corner_radius=theme.RADIUS,
             fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
-            text_color="#0f1318", text_color_disabled="#0f1318",
+            text_color=theme.ON_ACCENT, text_color_disabled=theme.ON_ACCENT,
             border_width=0, font=theme.font(12, "bold"),
             command=self._run)
         self.run_button.pack(side="left")
@@ -627,6 +768,9 @@ class NullTraceApp(ctk.CTk):
         state = self.form_state.setdefault(module.id, {})
         self.form.grid_columnconfigure(0, weight=1, uniform="form")
         self.form.grid_columnconfigure(1, weight=1, uniform="form")
+        if module.id == "auto_recon":
+            self._build_quick_form(state)
+            return
         cursor = [0, 0]
 
         def place(span: int, builder) -> None:
@@ -742,6 +886,38 @@ class NullTraceApp(ctk.CTk):
                     lambda val, e=entry: (e.delete(0, "end"), e.insert(0, str(val))))
                 hint_for(cell, f, 2)
             place(1, build_text)
+    def _build_quick_form(self, state: dict) -> None:
+        field = self.current.fields[0]
+        self.form.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(self.form, text="TARGET", anchor="w", font=theme.font(9, "bold"),
+                     text_color=theme.FAINT).grid(row=0, column=0, sticky="w", pady=(0, 6))
+        entry = ctk.CTkEntry(
+            self.form, height=42, corner_radius=theme.RADIUS, fg_color=theme.BG,
+            border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
+            placeholder_text=field.placeholder, placeholder_text_color=theme.FAINT,
+            font=theme.mono(14))
+        entry.grid(row=1, column=0, sticky="ew")
+        default = str(state.get("target", "") or "")
+        if default:
+            entry.insert(0, default)
+
+        chips = ctk.CTkFrame(self.form, fg_color="transparent")
+        chips.grid(row=2, column=0, sticky="w", pady=(10, 0))
+        for label in ("DOMAIN", "IP", "EMAIL", "PHONE", "VIN", "HASH", "USERNAME"):
+            ctk.CTkLabel(chips, text=label, font=theme.font(9), text_color=theme.MUTED,
+                         fg_color=theme.ELEV, corner_radius=theme.RADIUS_SMALL,
+                         padx=8, pady=2).pack(side="left", padx=(0, 6))
+
+        ctk.CTkLabel(self.form,
+                     text="The type is detected, the matching modules run, and the findings "
+                          "come back as a summary.",
+                     anchor="w", font=theme.font(9), text_color=theme.FAINT
+                     ).grid(row=3, column=0, sticky="w", pady=(10, 0))
+
+        self.form_widgets["target"] = FieldWidget(
+            field, lambda e=entry: e.get(),
+            lambda val, e=entry: (e.delete(0, "end"), e.insert(0, str(val))))
+
     def _browse(self, entry) -> None:
         path = filedialog.askopenfilename(title="Select a file")
         if path:
@@ -875,7 +1051,7 @@ class NullTraceApp(ctk.CTk):
         self._emit_line("muted", stamp)
         self._record("muted", stamp)
         self.run_button.configure(state="disabled", text="RUNNING ...",
-                                  fg_color=theme.ACCENT, text_color="#0f1318")
+                                  fg_color=theme.ACCENT, text_color=theme.ON_ACCENT)
         self.stop_button.configure(state="normal")
         self.started = time.time()
         self._set_output_status("starting", theme.WARN)
@@ -923,7 +1099,7 @@ class NullTraceApp(ctk.CTk):
     def _finish(self, status: str) -> None:
         gc.enable()
         gc.collect()
-        self.run_button.configure(state="normal", text="RUN SCAN",
+        self.run_button.configure(state="normal", text=getattr(self, "_run_label", "RUN SCAN"),
                                   fg_color=theme.ACCENT)
         self.stop_button.configure(state="disabled")
         if self._tick_job:
@@ -951,6 +1127,8 @@ class NullTraceApp(ctk.CTk):
     def _show_settings(self) -> None:
         self.view = "settings"
         self.current = None
+        self._set_crumb("settings")
+        self._mark_view("settings")
         self._clear_body()
         self._highlight_nav()
         self._grid_rows({0: 0, 1: 1})
@@ -972,7 +1150,7 @@ class NullTraceApp(ctk.CTk):
         card.grid(row=0, column=0, sticky="ew")
         card.grid_columnconfigure(1, weight=1)
         ctk.CTkLabel(card, text="[ API KEYS ]", anchor="w",
-                     font=theme.font(9, "bold"), text_color=theme.RED
+                     font=theme.font(9, "bold"), text_color=theme.ACCENT
                      ).grid(row=0, column=0, columnspan=3, sticky="w", padx=20, pady=(16, 8))
 
         reveal = tk.BooleanVar(value=False)
@@ -994,7 +1172,7 @@ class NullTraceApp(ctk.CTk):
             row += 1
 
         ctk.CTkLabel(card, text="[ NETWORK ]", anchor="w",
-                     font=theme.font(9, "bold"), text_color=theme.RED
+                     font=theme.font(9, "bold"), text_color=theme.ACCENT
                      ).grid(row=row, column=0, columnspan=3, sticky="w", padx=20,
                             pady=(20, 8))
         row += 1
@@ -1052,6 +1230,8 @@ class NullTraceApp(ctk.CTk):
     def _show_history(self, needle: str = "") -> None:
         self.view = "history"
         self.current = None
+        self._set_crumb("history")
+        self._mark_view("history")
         self._clear_body()
         self._highlight_nav()
         self._grid_rows({0: 0, 1: 0, 2: 1})

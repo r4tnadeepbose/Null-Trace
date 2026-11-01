@@ -1,9 +1,10 @@
 # Module reference
 
-Generated from `nulltrace/modules/__init__.py` — 31 modules.
+Generated from `nulltrace/modules/__init__.py` — 32 modules.
 
 | Module | ID | Category | Inputs | API key |
 |---|---|---|---|---|
+| **Quick Recon** | `auto_recon` | Recon | target* | — |
 | **IP Intel** | `ip_info` | Network | target* | — |
 | **DNS Lookup** | `dns_lookup` | Network | domain*, rtype (choice), common (checkbox) | — |
 | **DNS Reverse** | `dns_reverse` | Network | ip* | — |
@@ -39,6 +40,10 @@ Generated from `nulltrace/modules/__init__.py` — 31 modules.
 `*` marks a required input.
 
 ## What each one gives you
+
+### Quick Recon (`auto_recon`)
+
+One target in — domain, IP, email, phone, VIN, hash or username — swept across the matching modules with a findings summary.
 
 ### IP Intel (`ip_info`)
 

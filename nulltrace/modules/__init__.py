@@ -5,6 +5,7 @@ from __future__ import annotations
 from ..job import Module
 from . import (
     about,
+    auto_recon,
     cve,
     darkweb,
     dns_tools,
@@ -36,11 +37,13 @@ from . import (
     wifi,
 )
 
-CATEGORY_ORDER = ("Network", "Web", "Identity", "Vulnerability", "Media", "System")
+CATEGORY_ORDER = ("Recon", "Network", "Web", "Identity", "Vulnerability", "Media", "System")
 
 
 def all_modules() -> list[Module]:
     modules = [
+        # recon
+        auto_recon.MODULE,
         # network
         ip_info.MODULE,
         dns_tools.DNS_LOOKUP,
