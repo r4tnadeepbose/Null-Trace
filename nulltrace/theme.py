@@ -12,8 +12,8 @@ PANEL = "#0d0d0f"
 CARD = "#101012"
 ELEV = "#16161a"
 ELEV_HOVER = "#1e1e23"
-BORDER = "#2a2a2f"
-BORDER_SOFT = "#1b1b1f"
+BORDER = "#9a2f34"        # sleek 1px red edge for inputs and outlines
+BORDER_SOFT = "#5f2024"   # deeper red for card frames and dividers
 
 TEXT = "#eae8e4"
 MUTED = "#9a9791"

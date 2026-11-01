@@ -114,7 +114,7 @@ class NullTraceApp(ctk.CTk):
 
         self.search_entry = ctk.CTkEntry(
             sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32, corner_radius=theme.RADIUS,
-            fg_color=theme.BG, border_color=theme.BORDER, text_color=theme.TEXT,
+            fg_color=theme.BG, border_color=theme.BORDER_SOFT, text_color=theme.TEXT,
             placeholder_text_color=theme.FAINT, font=theme.font(11))
         self.search_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
         self.search_entry.bind("<KeyRelease>",
@@ -535,7 +535,8 @@ class NullTraceApp(ctk.CTk):
         self.run_button = ctk.CTkButton(
             actions, text="RUN SCAN", width=132, height=34, corner_radius=theme.RADIUS,
             fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
-            text_color="#0f1318", font=theme.font(12, "bold"),
+            text_color="#0f1318", text_color_disabled="#0f1318",
+            border_width=0, font=theme.font(12, "bold"),
             command=self._run)
         self.run_button.pack(side="left")
         self.stop_button = ctk.CTkButton(
@@ -703,6 +704,7 @@ class NullTraceApp(ctk.CTk):
                     ctk.CTkOptionMenu(
                         cell, values=list(f.choices), variable=variable, height=32,
                         corner_radius=theme.RADIUS, fg_color=theme.ELEV, button_color=theme.ELEV,
+                        border_width=1, border_color=theme.BORDER,
                         button_hover_color=theme.BORDER, text_color=theme.TEXT,
                         dropdown_fg_color=theme.PANEL, dropdown_hover_color=theme.ELEV,
                         dropdown_text_color=theme.TEXT,
@@ -872,7 +874,8 @@ class NullTraceApp(ctk.CTk):
         stamp = f"run started {datetime.now():%Y-%m-%d %H:%M:%S}"
         self._emit_line("muted", stamp)
         self._record("muted", stamp)
-        self.run_button.configure(state="disabled", text="Running ...")
+        self.run_button.configure(state="disabled", text="RUNNING ...",
+                                  fg_color=theme.ACCENT, text_color="#0f1318")
         self.stop_button.configure(state="normal")
         self.started = time.time()
         self._set_output_status("starting", theme.WARN)
@@ -920,7 +923,8 @@ class NullTraceApp(ctk.CTk):
     def _finish(self, status: str) -> None:
         gc.enable()
         gc.collect()
-        self.run_button.configure(state="normal", text="RUN SCAN")
+        self.run_button.configure(state="normal", text="RUN SCAN",
+                                  fg_color=theme.ACCENT)
         self.stop_button.configure(state="disabled")
         if self._tick_job:
             self.after_cancel(self._tick_job)

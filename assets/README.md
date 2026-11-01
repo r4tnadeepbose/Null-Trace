@@ -20,7 +20,7 @@ Palette (matches the application theme in `nulltrace/theme.py`):
 | text | `#eae8e4` |
 | muted | `#9a9791` |
 | signal red | `#e23b3b` |
-| border | `#2a2a2f` |
+| border | `#9a2f34` (cards `#5f2024`) |
 
 To generate a Windows icon from the mark:
 
