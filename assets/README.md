@@ -7,19 +7,20 @@
 | `footer.svg` | 1200×220 dark responsibility card used at the end of the README |
 | `app.ico` / `app.png` | window and taskbar icon (16–256 px) |
 
-Both are hand-written SVG with no external fonts or embedded images, so they
+All three are hand-written SVG with no external fonts or embedded images, so they
 scale cleanly and render in GitHub's image proxy.
 
 Palette (matches the application theme in `nulltrace/theme.py`):
 
 | Role | Hex |
 |---|---|
-| background | `#111318` |
-| panel | `#171a21` |
-| parchment text | `#e7e2d8` |
-| muted blue accent | `#7fa0c4` |
-| highlight | `#93b4d6` |
-| border | `#2d333f` |
+| background | `#08080a` |
+| panel | `#0d0d0f` |
+| card | `#101012` |
+| text | `#eae8e4` |
+| muted | `#9a9791` |
+| signal red | `#e23b3b` |
+| border | `#2a2a2f` |
 
 To generate a Windows icon from the mark:
 

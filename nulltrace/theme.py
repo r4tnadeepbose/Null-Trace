@@ -1,48 +1,80 @@
-"""Dark, muted palette shared by every widget."""
+"""Black-and-white terminal palette with a hacker-red accent.
+
+Sharp corners, monospace type, dim greys and one signal colour. Everything the
+interface draws comes from here, so the whole app changes with one edit.
+"""
 
 from __future__ import annotations
 
-BG = "#111318"
-PANEL = "#171a21"
-CARD = "#1b1f27"
-ELEV = "#232833"
-ELEV_HOVER = "#2a303c"
-BORDER = "#2d333f"
-BORDER_SOFT = "#242a34"
+# ------------------------------------------------------------------ palette
+BG = "#08080a"
+PANEL = "#0d0d0f"
+CARD = "#101012"
+ELEV = "#16161a"
+ELEV_HOVER = "#1e1e23"
+BORDER = "#2a2a2f"
+BORDER_SOFT = "#1b1b1f"
 
-TEXT = "#e7e2d8"      # parchment
-OUTPUT_BG = "#0c0f14"  # darker well behind scan output
-OUTPUT_TEXT = "#f0ece3"  # higher contrast for dense monospace text
-MUTED = "#9ba2af"
-FAINT = "#6b7280"
-ACCENT = "#7fa0c4"     # muted blue
-ACCENT_HOVER = "#93b4d6"
-ACCENT_DIM = "#2f4256"
+TEXT = "#eae8e4"
+MUTED = "#9a9791"
+FAINT = "#6a6762"
 
-OK = "#8fb59a"
-WARN = "#d7b26a"
-ERR = "#cd8383"
-LINK = "#93b4d6"
-NOTE = "#c9c3b6"
+RED = "#e23b3b"
+RED_BRIGHT = "#ff5252"
+RED_DIM = "#3a1416"
 
-FONT_UI = ("Segoe UI", 13)
-FONT_UI_SMALL = ("Segoe UI", 11)
-FONT_TITLE = ("Segoe UI", 24, "bold")
-FONT_SECTION = ("Segoe UI", 12, "bold")
-FONT_MONO = ("Consolas", 11)
+ACCENT = RED
+ACCENT_HOVER = RED_BRIGHT
+ACCENT_DIM = RED_DIM
 
-OUTPUT_FONT = ("Consolas", 12)
-OUTPUT_FONT_TITLE = ("Consolas", 15, "bold")
-OUTPUT_FONT_BOLD = ("Consolas", 12, "bold")
+OK = "#eae8e4"
+WARN = "#d98a8a"
+ERR = "#ff4d4d"
+LINK = "#ff6b6b"
+NOTE = "#cfccc6"
+
+OUTPUT_BG = "#060607"
+OUTPUT_TEXT = "#f2f0ec"
+
+# ------------------------------------------------------------------ type
+UI_FAMILY = "Consolas"
+MONO_FAMILY = "Consolas"
+
+
+def font(size: int, weight: str | None = None) -> tuple:
+    return (UI_FAMILY, size, weight) if weight else (UI_FAMILY, size)
+
+
+def mono(size: int, weight: str | None = None) -> tuple:
+    return (MONO_FAMILY, size, weight) if weight else (MONO_FAMILY, size)
+
+
+OUTPUT_FONT = mono(12)
+OUTPUT_FONT_TITLE = mono(14, "bold")
+OUTPUT_FONT_BOLD = mono(12, "bold")
+
+# ------------------------------------------------------------------ geometry
+RADIUS = 0
+RADIUS_SMALL = 2
+BORDER_WIDTH = 1
+
+CATEGORY_COLORS = {
+    "Network": "#d8d5cf",
+    "Web": "#c4c1bb",
+    "Identity": "#b0ada7",
+    "Vulnerability": RED,
+    "Media": "#9c9993",
+    "System": "#88857f",
+}
 
 TAG_COLORS = {
     "title": (TEXT, OUTPUT_FONT_TITLE),
-    "section": (ACCENT, OUTPUT_FONT_BOLD),
+    "section": (RED, OUTPUT_FONT_BOLD),
     "kv": (TEXT, None),
     "kv_label": (MUTED, None),
     "kv_value": (TEXT, None),
     "table": (NOTE, None),
-    "table_head": (ACCENT, None),  # bold would break column alignment
+    "table_head": (RED, None),  # bold would break column alignment
     "table_rule": (BORDER, None),
     "text": (TEXT, None),
     "ok": (OK, None),

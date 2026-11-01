@@ -25,10 +25,7 @@ from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 QUICK_MODULES = ("ip_info", "exposure_audit", "port_scan", "username_scan",
                  "metadata", "cve_research")
-CATEGORY_COLORS = {
-    "Network": "#6f8fae", "Web": "#8a9cbf", "Identity": "#a79bb8",
-    "Vulnerability": "#b98f8f", "Media": "#8fae9f", "System": "#9a9a8a",
-}
+CATEGORY_COLORS = theme.CATEGORY_COLORS
 
 
 class FieldWidget:
@@ -48,7 +45,7 @@ class NullTraceApp(ctk.CTk):
     def __init__(self) -> None:
         super().__init__(fg_color=theme.BG)
         self._set_window_icon()
-        self.title(f"{APP_NAME} — {TAGLINE}")
+        self.title(f"{APP_NAME.upper()}  //  OSINT WORKBENCH")
         self.geometry("1380x880")
         self.minsize(1160, 760)
         self.configure(fg_color=theme.BG)
@@ -95,25 +92,30 @@ class NullTraceApp(ctk.CTk):
         sidebar.grid_columnconfigure(0, weight=1)
 
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
-        brand.grid(row=0, column=0, sticky="ew", padx=18, pady=(20, 10))
-        ctk.CTkLabel(brand, text=APP_NAME, font=ctk.CTkFont("Segoe UI", 24, "bold"),
-                     text_color=theme.TEXT, anchor="w").pack(fill="x")
-        ctk.CTkLabel(brand, text=TAGLINE.upper(), font=ctk.CTkFont("Segoe UI", 9),
+        brand.grid(row=0, column=0, sticky="ew", padx=18, pady=(16, 10))
+        ctk.CTkFrame(brand, height=2, fg_color=theme.RED).pack(fill="x", pady=(0, 12))
+        mark = ctk.CTkFrame(brand, fg_color="transparent")
+        mark.pack(fill="x")
+        ctk.CTkLabel(mark, text="▌", font=theme.font(22, "bold"), text_color=theme.RED,
+                     anchor="w").pack(side="left")
+        ctk.CTkLabel(mark, text=APP_NAME.upper(), font=theme.font(22, "bold"),
+                     text_color=theme.TEXT, anchor="w").pack(side="left", padx=(2, 0))
+        ctk.CTkLabel(brand, text=TAGLINE.upper(), font=theme.font(9),
                      text_color=theme.FAINT, anchor="w").pack(fill="x", pady=(2, 0))
         meta = ctk.CTkFrame(brand, fg_color="transparent")
         meta.pack(fill="x", pady=(8, 0))
-        ctk.CTkLabel(meta, text=f"v{VERSION}", font=ctk.CTkFont("Segoe UI", 9),
+        ctk.CTkLabel(meta, text=f"v{VERSION}", font=theme.font(9),
                      text_color=theme.ACCENT).pack(side="left")
-        credit = ctk.CTkLabel(meta, text=f"·  by {AUTHOR}", font=ctk.CTkFont("Segoe UI", 9),
+        credit = ctk.CTkLabel(meta, text=f"·  by {AUTHOR}", font=theme.font(9),
                               text_color=theme.FAINT)
         credit.pack(side="left", padx=(6, 0))
         credit.bind("<Button-1>", lambda _e: webbrowser.open(GITHUB))
         credit.configure(cursor="hand2")
 
         self.search_entry = ctk.CTkEntry(
-            sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32, corner_radius=7,
+            sidebar, placeholder_text="Filter modules  (Ctrl+F)", height=32, corner_radius=theme.RADIUS,
             fg_color=theme.BG, border_color=theme.BORDER, text_color=theme.TEXT,
-            placeholder_text_color=theme.FAINT, font=ctk.CTkFont("Segoe UI", 11))
+            placeholder_text_color=theme.FAINT, font=theme.font(11))
         self.search_entry.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
         self.search_entry.bind("<KeyRelease>",
                                lambda _e: self._render_nav(self.search_entry.get()))
@@ -135,16 +137,16 @@ class NullTraceApp(ctk.CTk):
         inner_footer = ctk.CTkFrame(footer, fg_color="transparent")
         inner_footer.pack(fill="x", padx=12, pady=(8, 12))
         ctk.CTkLabel(inner_footer, text="WORKSPACE", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).pack(fill="x", padx=6, pady=(0, 4))
         for label, target in (("Dashboard", "dashboard"), ("History", "history"),
                               ("Settings", "settings")):
-            ctk.CTkButton(inner_footer, text=label, height=32, corner_radius=7, anchor="w",
+            ctk.CTkButton(inner_footer, text=label.upper(), height=32, corner_radius=theme.RADIUS, anchor="w",
                           fg_color="transparent", hover_color=theme.ELEV,
-                          text_color=theme.MUTED, font=ctk.CTkFont("Segoe UI", 12),
+                          text_color=theme.MUTED, font=theme.font(12),
                           command=lambda t=target: self._navigate(t)).pack(fill="x", pady=1)
-        ctk.CTkLabel(inner_footer, text="Local only · requests go upstream",
-                     font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT,
+        ctk.CTkLabel(inner_footer, text="LOCAL ONLY · REQUESTS GO UPSTREAM",
+                     font=theme.font(9), text_color=theme.FAINT,
                      anchor="w").pack(fill="x", padx=6, pady=(8, 0))
 
         self.body = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0)
@@ -166,28 +168,28 @@ class NullTraceApp(ctk.CTk):
             ]
             if not matches:
                 continue
-            ctk.CTkLabel(self.nav_scroll, text=category.upper(),
-                         font=ctk.CTkFont("Segoe UI", 9, "bold"), text_color=theme.FAINT,
+            ctk.CTkLabel(self.nav_scroll, text=f"[ {category.upper()} ]",
+                         font=theme.font(9, "bold"), text_color=theme.FAINT,
                          anchor="w").pack(fill="x", padx=8, pady=(12, 3))
             for module in matches:
                 button = ctk.CTkButton(
-                    self.nav_scroll, text=module.title, anchor="w", height=31,
-                    corner_radius=6, fg_color="transparent", hover_color=theme.ELEV,
-                    text_color=theme.MUTED, font=ctk.CTkFont("Segoe UI", 12),
+                    self.nav_scroll, text=module.title.upper(), anchor="w", height=30,
+                    corner_radius=theme.RADIUS, fg_color="transparent", hover_color=theme.ELEV,
+                    text_color=theme.MUTED, font=theme.font(12),
                     command=lambda m=module: self._select_module(m.id))
                 button.pack(fill="x", padx=2, pady=1)
                 self.nav_buttons[module.id] = button
                 shown += 1
         if not shown:
             ctk.CTkLabel(self.nav_scroll, text="No module matches that filter.",
-                         font=ctk.CTkFont("Segoe UI", 10), text_color=theme.FAINT,
+                         font=theme.font(10), text_color=theme.FAINT,
                          anchor="w", wraplength=190).pack(fill="x", padx=8, pady=12)
         self._highlight_nav()
 
     def _highlight_nav(self) -> None:
         for module_id, button in self.nav_buttons.items():
             if module_id == (self.current.id if self.current and self.view == "module" else None):
-                button.configure(fg_color=theme.ACCENT_DIM, text_color=theme.TEXT,
+                button.configure(fg_color=theme.ACCENT_DIM, text_color=theme.RED_BRIGHT,
                                  hover_color=theme.ELEV)
             else:
                 button.configure(fg_color="transparent", text_color=theme.MUTED,
@@ -222,23 +224,23 @@ class NullTraceApp(ctk.CTk):
         frame = ctk.CTkFrame(self.body, fg_color="transparent")
         frame.grid(row=0, column=0, sticky="new", padx=30, pady=(24, 10))
         frame.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(frame, text=title, anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 24, "bold"),
+        ctk.CTkLabel(frame, text=title.upper(), anchor="w",
+                     font=theme.font(24, "bold"),
                      text_color=theme.TEXT).grid(row=0, column=0, sticky="w")
         if chip:
-            ctk.CTkLabel(frame, text=chip.upper(), anchor="e",
-                         font=ctk.CTkFont("Segoe UI", 9, "bold"),
+            ctk.CTkLabel(frame, text=f"[ {chip.upper()} ]", anchor="e",
+                         font=theme.font(9, "bold"),
                          text_color=CATEGORY_COLORS.get(chip, theme.ACCENT),
-                         fg_color=theme.CARD, corner_radius=6, padx=10, pady=3
+                         fg_color=theme.CARD, corner_radius=theme.RADIUS, padx=10, pady=3
                          ).grid(row=0, column=1, sticky="e")
         ctk.CTkLabel(frame, text=subtitle, anchor="w", justify="left", wraplength=980,
-                     font=ctk.CTkFont("Segoe UI", 11),
+                     font=theme.font(11),
                      text_color=theme.MUTED).grid(row=1, column=0, columnspan=2,
                                                   sticky="w", pady=(4, 0))
         return frame
 
     def _card(self, parent, **kwargs) -> ctk.CTkFrame:
-        return ctk.CTkFrame(parent, fg_color=theme.PANEL, corner_radius=12,
+        return ctk.CTkFrame(parent, fg_color=theme.PANEL, corner_radius=theme.RADIUS,
                             border_width=1, border_color=theme.BORDER_SOFT, **kwargs)
 
     def _toast(self, text: str, kind: str = "ok") -> None:
@@ -249,8 +251,8 @@ class NullTraceApp(ctk.CTk):
                 pass
         color = {"ok": theme.OK, "warn": theme.WARN, "err": theme.ERR}.get(kind, theme.TEXT)
         self._toast_widget = ctk.CTkLabel(
-            self.body, text=text, font=ctk.CTkFont("Segoe UI", 11), text_color=color,
-            fg_color=theme.CARD, corner_radius=8, padx=14, pady=8,
+            self.body, text=text, font=theme.font(11), text_color=color,
+            fg_color=theme.CARD, corner_radius=theme.RADIUS, padx=14, pady=8,
             border_width=1, border_color=theme.BORDER)
         self._toast_widget.place(relx=0.985, rely=0.975, anchor="se")
         label = self._toast_widget
@@ -300,11 +302,11 @@ class NullTraceApp(ctk.CTk):
         header = ctk.CTkFrame(self.body, fg_color="transparent")
         header.grid(row=0, column=0, sticky="new", padx=30, pady=(24, 12))
         header.grid_columnconfigure(0, weight=1)
-        ctk.CTkLabel(header, text="Dashboard", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 24, "bold"),
+        ctk.CTkLabel(header, text="DASHBOARD", anchor="w",
+                     font=theme.font(24, "bold"),
                      text_color=theme.TEXT).grid(row=0, column=0, sticky="w")
         ctk.CTkLabel(header, text=f"{now:%A, %d %B %Y}  ·  {len(self.modules)} modules ready",
-                     anchor="w", font=ctk.CTkFont("Segoe UI", 11),
+                     anchor="w", font=theme.font(11),
                      text_color=theme.MUTED).grid(row=1, column=0, sticky="w", pady=(4, 0))
 
         stats = ctk.CTkFrame(self.body, fg_color="transparent")
@@ -322,12 +324,12 @@ class NullTraceApp(ctk.CTk):
             inner = ctk.CTkFrame(card, fg_color="transparent")
             inner.pack(fill="x", padx=16, pady=14)
             ctk.CTkLabel(inner, text=label.upper(), anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                         font=theme.font(9, "bold"),
                          text_color=theme.FAINT).pack(fill="x")
             ctk.CTkLabel(inner, text=value, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 26, "bold"),
+                         font=theme.font(26, "bold"),
                          text_color=color).pack(fill="x", pady=(2, 0))
-            ctk.CTkLabel(inner, text=hint, anchor="w", font=ctk.CTkFont("Segoe UI", 9),
+            ctk.CTkLabel(inner, text=hint, anchor="w", font=theme.font(9),
                          text_color=theme.MUTED).pack(fill="x")
 
         lower = ctk.CTkFrame(self.body, fg_color="transparent")
@@ -342,7 +344,7 @@ class NullTraceApp(ctk.CTk):
         left.grid_rowconfigure(5, weight=1)
 
         ctk.CTkLabel(left, text="QUICK START", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).grid(row=0, column=0, sticky="w",
                                                   padx=18, pady=(14, 6))
         quick = ctk.CTkFrame(left, fg_color="transparent")
@@ -355,14 +357,14 @@ class NullTraceApp(ctk.CTk):
             if not module:
                 continue
             ctk.CTkButton(
-                quick, text=module.title, height=36, corner_radius=8,
+                quick, text=module.title.upper(), height=34, corner_radius=theme.RADIUS,
                 fg_color=theme.ELEV, hover_color=theme.ELEV_HOVER, text_color=theme.TEXT,
-                font=ctk.CTkFont("Segoe UI", 11), anchor="w",
+                font=theme.font(11), anchor="w",
                 command=lambda m=module: self._select_module(m.id)
             ).grid(row=index // 3, column=index % 3, sticky="ew", padx=4, pady=4)
 
         ctk.CTkLabel(left, text="RECENT RUNS", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).grid(row=2, column=0, sticky="w",
                                                   padx=18, pady=(14, 4))
         recent = ctk.CTkFrame(left, fg_color="transparent")
@@ -371,28 +373,28 @@ class NullTraceApp(ctk.CTk):
         if records:
             for index, record in enumerate(records[:5]):
                 ctk.CTkLabel(recent, text=record["started"].replace("T", " ")[5:16],
-                             width=78, anchor="w", font=ctk.CTkFont("Consolas", 10),
+                             width=78, anchor="w", font=theme.mono(10),
                              text_color=theme.FAINT).grid(row=index, column=0, sticky="w",
                                                           pady=1)
                 link = ctk.CTkLabel(recent, anchor="w", cursor="hand2",
                                     text=f"{record['title']}  ·  {record['target'] or '—'}"[:68],
-                                    font=ctk.CTkFont("Segoe UI", 11), text_color=theme.TEXT)
+                                    font=theme.font(11), text_color=theme.TEXT)
                 link.grid(row=index, column=1, sticky="w")
                 link.bind("<Button-1>",
                           lambda _e, r=record: self._open_history(int(r["id"])))
                 status_color = {"ok": theme.OK, "error": theme.ERR,
                                 "cancelled": theme.WARN}.get(record["status"], theme.MUTED)
-                ctk.CTkLabel(recent, text=record["status"], width=60, anchor="e",
-                             font=ctk.CTkFont("Segoe UI", 9),
+                ctk.CTkLabel(recent, text=record["status"].upper(), width=60, anchor="e",
+                             font=theme.font(9),
                              text_color=status_color).grid(row=index, column=2, sticky="e")
         else:
             ctk.CTkLabel(recent, text="Nothing yet — run your first scan.",
-                         anchor="w", font=ctk.CTkFont("Segoe UI", 11),
+                         anchor="w", font=theme.font(11),
                          text_color=theme.FAINT).grid(row=0, column=0, columnspan=3,
                                                       sticky="w")
 
         ctk.CTkLabel(left, text="ALL MODULES", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).grid(row=4, column=0, sticky="w",
                                                   padx=18, pady=(16, 4))
         browser = ctk.CTkScrollableFrame(left, fg_color="transparent", corner_radius=0,
@@ -403,12 +405,12 @@ class NullTraceApp(ctk.CTk):
             browser.grid_columnconfigure(column, weight=1)
         for index, module in enumerate(self.modules):
             ctk.CTkButton(
-                browser, text=module.title, anchor="w", height=28, corner_radius=6,
+                browser, text=module.title.upper(), anchor="w", height=26, corner_radius=theme.RADIUS,
                 fg_color="transparent", hover_color=theme.ELEV, text_color=theme.MUTED,
-                font=ctk.CTkFont("Segoe UI", 10),
+                font=theme.font(10),
                 command=lambda m=module: self._select_module(m.id)
             ).grid(row=index // 2, column=index % 2, sticky="ew", padx=2, pady=1)
-        ctk.CTkButton(left, text="Open full history", height=30, corner_radius=7,
+        ctk.CTkButton(left, text="OPEN FULL HISTORY", height=30, corner_radius=theme.RADIUS,
                       fg_color="transparent", border_width=1, border_color=theme.BORDER,
                       text_color=theme.MUTED, hover_color=theme.ELEV,
                       command=self._show_history).grid(row=6, column=0, sticky="ew",
@@ -417,7 +419,7 @@ class NullTraceApp(ctk.CTk):
         right = self._card(lower)
         right.grid(row=0, column=1, sticky="nsew", padx=(8, 0))
         ctk.CTkLabel(right, text="ENVIRONMENT", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).pack(fill="x", padx=18, pady=(14, 8))
         for label, value, good in (
             ("Python", sys.version.split()[0], True),
@@ -430,14 +432,14 @@ class NullTraceApp(ctk.CTk):
             row = ctk.CTkFrame(right, fg_color="transparent", height=20)
             row.pack(fill="x", padx=18)
             ctk.CTkLabel(row, text=label, width=86, height=20, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 10),
+                         font=theme.font(10),
                          text_color=theme.MUTED).pack(side="left")
             ctk.CTkLabel(row, text=value[:32], height=20, anchor="w",
-                         font=ctk.CTkFont("Consolas", 10),
+                         font=theme.mono(10),
                          text_color=theme.TEXT if good else theme.WARN).pack(side="left")
 
         ctk.CTkLabel(right, text="KEYS", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).pack(fill="x", padx=18, pady=(16, 6))
         keys = ctk.CTkFrame(right, fg_color="transparent")
         keys.pack(fill="x", padx=14)
@@ -448,44 +450,44 @@ class NullTraceApp(ctk.CTk):
             cell.grid(row=index // 2, column=index % 2, sticky="w", padx=4)
             ok = bool(CONFIG.key(name))
             ctk.CTkLabel(cell, text="●", width=12, height=18, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 9),
+                         font=theme.font(9),
                          text_color=theme.OK if ok else theme.FAINT).pack(side="left")
             ctk.CTkLabel(cell, text=label, height=18, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 9),
+                         font=theme.font(9),
                          text_color=theme.TEXT if ok else theme.MUTED).pack(side="left")
 
         ctk.CTkLabel(right, text="COVERAGE", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).pack(fill="x", padx=18, pady=(18, 6))
         largest = max(len(items) for items in self.groups.values()) or 1
         for category, items in self.groups.items():
             row = ctk.CTkFrame(right, fg_color="transparent", height=20)
             row.pack(fill="x", padx=18, pady=1)
             ctk.CTkLabel(row, text=category, width=96, height=20, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 9),
+                         font=theme.font(9),
                          text_color=theme.MUTED).pack(side="left")
-            bar = ctk.CTkProgressBar(row, width=96, height=5, corner_radius=3,
+            bar = ctk.CTkProgressBar(row, width=96, height=4, corner_radius=0,
                                      progress_color=CATEGORY_COLORS.get(category, theme.ACCENT),
                                      fg_color=theme.ELEV)
             bar.set(len(items) / largest)
             bar.pack(side="left", padx=(0, 8))
             ctk.CTkLabel(row, text=str(len(items)), height=20, anchor="w",
-                         font=ctk.CTkFont("Consolas", 9),
+                         font=theme.mono(9),
                          text_color=theme.TEXT).pack(side="left")
         keyed = sum(1 for m in self.modules if m.keys)
         ctk.CTkLabel(right, text=f"{keyed} modules accept an API key · {len(self.modules)} total",
-                     anchor="w", font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT
+                     anchor="w", font=theme.font(9), text_color=theme.FAINT
                      ).pack(fill="x", padx=18, pady=(8, 0))
 
         ctk.CTkLabel(right, text=f"{CONFIG_PATH}\nhistory.db · kev.json · rdap_dns.json",
                      anchor="w", justify="left", wraplength=260,
-                     font=ctk.CTkFont("Consolas", 9), text_color=theme.MUTED
+                     font=theme.mono(9), text_color=theme.MUTED
                      ).pack(side="bottom", fill="x", padx=18, pady=(0, 14))
         ctk.CTkLabel(right, text="LOCAL PATHS", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"),
+                     font=theme.font(9, "bold"),
                      text_color=theme.FAINT).pack(side="bottom", fill="x", padx=18,
                                                   pady=(0, 2))
-        ctk.CTkButton(right, text="Manage keys", height=30, corner_radius=7,
+        ctk.CTkButton(right, text="MANAGE KEYS", height=30, corner_radius=theme.RADIUS,
                       fg_color="transparent", border_width=1, border_color=theme.BORDER,
                       text_color=theme.MUTED, hover_color=theme.ELEV,
                       command=self._show_settings).pack(side="bottom", fill="x", padx=18,
@@ -514,7 +516,7 @@ class NullTraceApp(ctk.CTk):
             if missing:
                 text += f"   ·   not set: {', '.join(missing)}"
             ctk.CTkLabel(header, text=text, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT
+                         font=theme.font(9), text_color=theme.FAINT
                          ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(3, 0))
 
         card = self._card(self.body)
@@ -525,25 +527,25 @@ class NullTraceApp(ctk.CTk):
         self._build_form(module)
         if not module.fields:
             ctk.CTkLabel(self.form, text="This module has no inputs — press Run scan.",
-                         anchor="w", font=ctk.CTkFont("Segoe UI", 10),
+                         anchor="w", font=theme.font(10),
                          text_color=theme.FAINT).grid(row=0, column=0, sticky="w")
 
         actions = ctk.CTkFrame(card, fg_color="transparent")
         actions.grid(row=1, column=0, sticky="ew", padx=20, pady=(4, 16))
         self.run_button = ctk.CTkButton(
-            actions, text="Run scan", width=132, height=34, corner_radius=8,
+            actions, text="RUN SCAN", width=132, height=34, corner_radius=theme.RADIUS,
             fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
-            text_color="#0f1318", font=ctk.CTkFont("Segoe UI", 12, "bold"),
+            text_color="#0f1318", font=theme.font(12, "bold"),
             command=self._run)
         self.run_button.pack(side="left")
         self.stop_button = ctk.CTkButton(
-            actions, text="Stop", width=76, height=34, corner_radius=8,
+            actions, text="STOP", width=76, height=34, corner_radius=theme.RADIUS,
             fg_color="transparent", border_width=1, border_color=theme.BORDER,
             text_color=theme.MUTED, hover_color=theme.ELEV, state="disabled",
             command=self._stop)
         self.stop_button.pack(side="left", padx=(8, 0))
         ctk.CTkLabel(actions, text="Ctrl+Enter runs  ·  Ctrl+S exports",
-                     font=ctk.CTkFont("Segoe UI", 9), text_color=theme.FAINT
+                     font=theme.font(9), text_color=theme.FAINT
                      ).pack(side="right")
 
         output_card = self._card(self.body)
@@ -564,26 +566,26 @@ class NullTraceApp(ctk.CTk):
         bar = ctk.CTkFrame(card, fg_color="transparent")
         bar.grid(row=0, column=0, sticky="ew", padx=16, pady=(12, 6))
         bar.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(bar, text="OUTPUT", font=ctk.CTkFont("Segoe UI", 9, "bold"),
+        ctk.CTkLabel(bar, text="OUTPUT", font=theme.font(9, "bold"),
                      text_color=theme.FAINT).grid(row=0, column=0, sticky="w")
         self.output_status = ctk.CTkLabel(bar, text="idle", anchor="w",
-                                          font=ctk.CTkFont("Segoe UI", 9),
+                                          font=theme.font(9),
                                           text_color=theme.FAINT)
         self.output_status.grid(row=0, column=1, sticky="w", padx=(10, 0))
 
         buttons = ctk.CTkFrame(bar, fg_color="transparent")
         buttons.grid(row=0, column=2, sticky="e")
-        for label, command in (("Copy", self._copy_output), ("Export", self._export),
-                               ("Clear", self._clear_output)):
-            ctk.CTkButton(buttons, text=label, width=64, height=26, corner_radius=6,
+        for label, command in (("COPY", self._copy_output), ("EXPORT", self._export),
+                               ("CLEAR", self._clear_output)):
+            ctk.CTkButton(buttons, text=label, width=64, height=26, corner_radius=theme.RADIUS,
                           fg_color="transparent", border_width=1, border_color=theme.BORDER,
                           text_color=theme.MUTED, hover_color=theme.ELEV,
-                          font=ctk.CTkFont("Segoe UI", 10), command=command
+                          font=theme.font(10), command=command
                           ).pack(side="left", padx=(6, 0))
 
         self.output = ctk.CTkTextbox(
             card, fg_color=theme.OUTPUT_BG, text_color=theme.OUTPUT_TEXT,
-            font=ctk.CTkFont(*theme.OUTPUT_FONT), corner_radius=8, wrap="word",
+            font=ctk.CTkFont(*theme.OUTPUT_FONT), corner_radius=theme.RADIUS, wrap="word",
             border_width=0, scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)
         self.output.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
@@ -644,14 +646,14 @@ class NullTraceApp(ctk.CTk):
 
         def label_for(cell, field: Field, row: int) -> None:
             ctk.CTkLabel(cell, text=field.label + (" *" if field.required else ""),
-                         anchor="w", font=ctk.CTkFont("Segoe UI", 11),
+                         anchor="w", font=theme.font(11),
                          text_color=theme.TEXT if field.required else theme.MUTED
                          ).grid(row=row, column=0, sticky="w", pady=(0, 3))
 
         def hint_for(cell, field: Field, row: int) -> None:
             if field.help:
                 ctk.CTkLabel(cell, text=field.help, anchor="w", justify="left",
-                             wraplength=520, font=ctk.CTkFont("Segoe UI", 9),
+                             wraplength=520, font=theme.font(9),
                              text_color=theme.FAINT).grid(row=row, column=0, sticky="w",
                                                           pady=(3, 0))
 
@@ -663,7 +665,7 @@ class NullTraceApp(ctk.CTk):
                     variable = tk.BooleanVar(value=str(d) in ("1", "True", "true"))
                     ctk.CTkCheckBox(
                         cell, text=f.label, variable=variable,
-                        font=ctk.CTkFont("Segoe UI", 11), text_color=theme.MUTED,
+                        font=theme.font(11), text_color=theme.MUTED,
                         checkbox_width=18, checkbox_height=18, corner_radius=4,
                         border_width=2, border_color=theme.BORDER,
                         fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
@@ -680,9 +682,9 @@ class NullTraceApp(ctk.CTk):
                 def build_multiline(cell, f=field, d=default) -> None:
                     label_for(cell, f, 0)
                     widget = ctk.CTkTextbox(
-                        cell, height=92, corner_radius=6, fg_color=theme.BG,
+                        cell, height=92, corner_radius=theme.RADIUS, fg_color=theme.BG,
                         border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
-                        font=ctk.CTkFont("Consolas", 11), wrap="word")
+                        font=theme.mono(11), wrap="word")
                     widget.grid(row=1, column=0, sticky="ew")
                     widget.insert("1.0", str(d))
                     self.form_widgets[f.name] = FieldWidget(
@@ -700,11 +702,11 @@ class NullTraceApp(ctk.CTk):
                                             (f.choices[0] if f.choices else ""))
                     ctk.CTkOptionMenu(
                         cell, values=list(f.choices), variable=variable, height=32,
-                        corner_radius=6, fg_color=theme.ELEV, button_color=theme.ELEV,
+                        corner_radius=theme.RADIUS, fg_color=theme.ELEV, button_color=theme.ELEV,
                         button_hover_color=theme.BORDER, text_color=theme.TEXT,
                         dropdown_fg_color=theme.PANEL, dropdown_hover_color=theme.ELEV,
                         dropdown_text_color=theme.TEXT,
-                        font=ctk.CTkFont("Segoe UI", 11),
+                        font=theme.font(11),
                     ).grid(row=1, column=0, sticky="ew")
                     self.form_widgets[f.name] = FieldWidget(
                         f, lambda v=variable: v.get(),
@@ -719,18 +721,18 @@ class NullTraceApp(ctk.CTk):
                 wrapper.grid(row=1, column=0, sticky="ew")
                 wrapper.grid_columnconfigure(0, weight=1)
                 entry = ctk.CTkEntry(
-                    wrapper, height=32, corner_radius=6, fg_color=theme.BG,
+                    wrapper, height=32, corner_radius=theme.RADIUS, fg_color=theme.BG,
                     border_width=1, border_color=theme.BORDER, text_color=theme.TEXT,
                     placeholder_text=f.placeholder,
-                    font=ctk.CTkFont("Consolas", 11))
+                    font=theme.mono(11))
                 entry.grid(row=0, column=0, sticky="ew")
                 if d:
                     entry.insert(0, str(d))
                 if f.kind == "file":
                     ctk.CTkButton(
-                        wrapper, text="Browse", width=84, height=32, corner_radius=6,
+                        wrapper, text="BROWSE", width=84, height=32, corner_radius=theme.RADIUS,
                         fg_color=theme.ELEV, hover_color=theme.BORDER, text_color=theme.TEXT,
-                        font=ctk.CTkFont("Segoe UI", 11),
+                        font=theme.font(11),
                         command=lambda e=entry: self._browse(e),
                     ).grid(row=0, column=1, padx=(8, 0))
                 self.form_widgets[f.name] = FieldWidget(
@@ -761,7 +763,7 @@ class NullTraceApp(ctk.CTk):
     # ------------------------------------------------------------------ output
     def _set_output_status(self, text: str, color: str = theme.FAINT) -> None:
         if self.output_status is not None and self.output_status.winfo_exists():
-            self.output_status.configure(text=text, text_color=color)
+            self.output_status.configure(text=f"[ {text.upper()} ]", text_color=color)
 
     def _emit_line(self, kind: str, text: str) -> None:
         """Queue a line; the widget is updated in batches to keep the UI smooth."""
@@ -800,7 +802,7 @@ class NullTraceApp(ctk.CTk):
                     box._link_map[line] = url
                 line += 1
             else:
-                box.insert("end", text + "\n", kind)
+                box.insert("end", (text.upper() if kind == "title" else text) + "\n", kind)
                 line += 1
                 if kind == "section":
                     box.insert("end", "\n", "text")
@@ -918,7 +920,7 @@ class NullTraceApp(ctk.CTk):
     def _finish(self, status: str) -> None:
         gc.enable()
         gc.collect()
-        self.run_button.configure(state="normal", text="Run scan")
+        self.run_button.configure(state="normal", text="RUN SCAN")
         self.stop_button.configure(state="disabled")
         if self._tick_job:
             self.after_cancel(self._tick_job)
@@ -965,8 +967,8 @@ class NullTraceApp(ctk.CTk):
         card = self._card(scroll)
         card.grid(row=0, column=0, sticky="ew")
         card.grid_columnconfigure(1, weight=1)
-        ctk.CTkLabel(card, text="API KEYS", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"), text_color=theme.FAINT
+        ctk.CTkLabel(card, text="[ API KEYS ]", anchor="w",
+                     font=theme.font(9, "bold"), text_color=theme.RED
                      ).grid(row=0, column=0, columnspan=3, sticky="w", padx=20, pady=(16, 8))
 
         reveal = tk.BooleanVar(value=False)
@@ -974,21 +976,21 @@ class NullTraceApp(ctk.CTk):
         row = 1
         for name, label, hint in KEY_LABELS:
             ctk.CTkLabel(card, text=label, width=150, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 11), text_color=theme.TEXT
+                         font=theme.font(11), text_color=theme.TEXT
                          ).grid(row=row, column=0, sticky="w", padx=(20, 10), pady=3)
-            entry = ctk.CTkEntry(card, height=30, corner_radius=6, fg_color=theme.BG,
+            entry = ctk.CTkEntry(card, height=30, corner_radius=theme.RADIUS, fg_color=theme.BG,
                                  border_color=theme.BORDER, text_color=theme.TEXT,
-                                 show="•", font=ctk.CTkFont("Consolas", 10))
+                                 show="•", font=theme.mono(10))
             entry.grid(row=row, column=1, sticky="ew", pady=3)
             entry.insert(0, CONFIG.key(name))
             entries[name] = entry
-            ctk.CTkLabel(card, text=hint, anchor="w", font=ctk.CTkFont("Segoe UI", 9),
+            ctk.CTkLabel(card, text=hint, anchor="w", font=theme.font(9),
                          text_color=theme.FAINT).grid(row=row, column=2, sticky="w",
                                                       padx=(12, 20))
             row += 1
 
-        ctk.CTkLabel(card, text="NETWORK", anchor="w",
-                     font=ctk.CTkFont("Segoe UI", 9, "bold"), text_color=theme.FAINT
+        ctk.CTkLabel(card, text="[ NETWORK ]", anchor="w",
+                     font=theme.font(9, "bold"), text_color=theme.RED
                      ).grid(row=row, column=0, columnspan=3, sticky="w", padx=20,
                             pady=(20, 8))
         row += 1
@@ -999,11 +1001,11 @@ class NullTraceApp(ctk.CTk):
             ("user_agent", "User agent", CONFIG.user_agent),
         ):
             ctk.CTkLabel(card, text=label, width=150, anchor="w",
-                         font=ctk.CTkFont("Segoe UI", 11), text_color=theme.TEXT
+                         font=theme.font(11), text_color=theme.TEXT
                          ).grid(row=row, column=0, sticky="w", padx=(20, 10), pady=3)
-            entry = ctk.CTkEntry(card, height=30, corner_radius=6, fg_color=theme.BG,
+            entry = ctk.CTkEntry(card, height=30, corner_radius=theme.RADIUS, fg_color=theme.BG,
                                  border_color=theme.BORDER, text_color=theme.TEXT,
-                                 font=ctk.CTkFont("Consolas", 10))
+                                 font=theme.mono(10))
             entry.grid(row=row, column=1, sticky="ew", pady=3)
             entry.insert(0, str(CONFIG.get("network", key, default)))
             network_entries[key] = entry
@@ -1025,18 +1027,18 @@ class NullTraceApp(ctk.CTk):
                 CONFIG.set("network", key, entry.get().strip())
             self._toast("Settings saved")
 
-        ctk.CTkButton(footer, text="Save settings", width=150, height=34, corner_radius=8,
+        ctk.CTkButton(footer, text="SAVE SETTINGS", width=150, height=34, corner_radius=theme.RADIUS,
                       fg_color=theme.ACCENT, hover_color=theme.ACCENT_HOVER,
-                      text_color="#0f1318", font=ctk.CTkFont("Segoe UI", 12, "bold"),
+                      text_color="#0f1318", font=theme.font(12, "bold"),
                       command=save).grid(row=0, column=0, sticky="w")
-        ctk.CTkCheckBox(footer, text="Show keys", variable=reveal, command=toggle_reveal,
-                        font=ctk.CTkFont("Segoe UI", 11), text_color=theme.MUTED,
+        ctk.CTkCheckBox(footer, text="SHOW KEYS", variable=reveal, command=toggle_reveal,
+                        font=theme.font(11), text_color=theme.MUTED,
                         checkbox_width=18, checkbox_height=18, corner_radius=4,
                         border_width=2, border_color=theme.BORDER, fg_color=theme.ACCENT,
-                        hover_color=theme.ACCENT_HOVER, checkmark_color="#101418"
+                        hover_color=theme.ACCENT_HOVER, checkmark_color="#0b0b0d"
                         ).grid(row=0, column=1, sticky="w", padx=(16, 0))
-        ctk.CTkButton(footer, text="Open config folder", width=150, height=34,
-                      corner_radius=8, fg_color="transparent", border_width=1,
+        ctk.CTkButton(footer, text="CONFIG FOLDER", width=150, height=34,
+                      corner_radius=theme.RADIUS, fg_color="transparent", border_width=1,
                       border_color=theme.BORDER, text_color=theme.MUTED,
                       hover_color=theme.ELEV,
                       command=lambda: webbrowser.open(str(CONFIG_PATH.parent))
@@ -1055,12 +1057,12 @@ class NullTraceApp(ctk.CTk):
         bar.grid(row=1, column=0, sticky="ew", padx=30, pady=(0, 8))
         bar.grid_columnconfigure(0, weight=1)
         entry = ctk.CTkEntry(bar, placeholder_text="Filter by module or target", height=32,
-                             corner_radius=7, fg_color=theme.BG, border_color=theme.BORDER,
-                             text_color=theme.TEXT, font=ctk.CTkFont("Segoe UI", 11))
+                             corner_radius=theme.RADIUS, fg_color=theme.BG, border_color=theme.BORDER,
+                             text_color=theme.TEXT, font=theme.font(11))
         entry.grid(row=0, column=0, sticky="ew")
         if needle:
             entry.insert(0, needle)
-        ctk.CTkButton(bar, text="Clear all", width=96, height=32, corner_radius=7,
+        ctk.CTkButton(bar, text="CLEAR ALL", width=96, height=32, corner_radius=theme.RADIUS,
                       fg_color="transparent", border_width=1, border_color=theme.BORDER,
                       text_color=theme.ERR, hover_color=theme.ELEV,
                       command=self._clear_history).grid(row=0, column=1, padx=(8, 0))
@@ -1087,33 +1089,33 @@ class NullTraceApp(ctk.CTk):
                        or filter_text in r["module"].lower()]
             if not matches:
                 ctk.CTkLabel(scroll, text="No runs match.", anchor="w",
-                             font=ctk.CTkFont("Segoe UI", 11), text_color=theme.FAINT
+                             font=theme.font(11), text_color=theme.FAINT
                              ).grid(row=0, column=0, sticky="w", padx=6, pady=8)
                 return
             for index, record in enumerate(matches):
-                row_card = ctk.CTkFrame(scroll, fg_color=theme.PANEL, corner_radius=8,
+                row_card = ctk.CTkFrame(scroll, fg_color=theme.PANEL, corner_radius=theme.RADIUS,
                                         border_width=1, border_color=theme.BORDER_SOFT)
                 row_card.grid(row=index, column=0, sticky="ew", pady=2)
                 row_card.grid_columnconfigure(1, weight=1)
                 ctk.CTkLabel(row_card, text=record["started"].replace("T", " ")[5:16],
-                             width=84, anchor="w", font=ctk.CTkFont("Consolas", 10),
+                             width=84, anchor="w", font=theme.mono(10),
                              text_color=theme.FAINT).grid(row=0, column=0, padx=(12, 6), pady=8)
                 ctk.CTkLabel(row_card, text=f"{record['title']}  ·  {record['target'] or '—'}",
-                             anchor="w", font=ctk.CTkFont("Segoe UI", 11),
+                             anchor="w", font=theme.font(11),
                              text_color=theme.TEXT).grid(row=0, column=1, sticky="w")
                 color = {"ok": theme.OK, "error": theme.ERR,
                          "cancelled": theme.WARN}.get(record["status"], theme.MUTED)
-                ctk.CTkLabel(row_card, text=record["status"], width=66,
-                             font=ctk.CTkFont("Segoe UI", 9), text_color=color
+                ctk.CTkLabel(row_card, text=record["status"].upper(), width=66,
+                             font=theme.font(9), text_color=color
                              ).grid(row=0, column=2)
-                ctk.CTkButton(row_card, text="Open", width=58, height=26, corner_radius=6,
+                ctk.CTkButton(row_card, text="OPEN", width=58, height=26, corner_radius=theme.RADIUS,
                               fg_color=theme.ELEV, hover_color=theme.BORDER,
-                              text_color=theme.TEXT, font=ctk.CTkFont("Segoe UI", 10),
+                              text_color=theme.TEXT, font=theme.font(10),
                               command=lambda r=record: self._open_history(int(r["id"]))
                               ).grid(row=0, column=3, padx=(0, 4))
-                ctk.CTkButton(row_card, text="Delete", width=62, height=26, corner_radius=6,
+                ctk.CTkButton(row_card, text="DELETE", width=62, height=26, corner_radius=theme.RADIUS,
                               fg_color="transparent", hover_color=theme.ELEV,
-                              text_color=theme.ERR, font=ctk.CTkFont("Segoe UI", 10),
+                              text_color=theme.ERR, font=theme.font(10),
                               command=lambda r=record: self._delete_history(int(r["id"]))
                               ).grid(row=0, column=4, padx=(0, 10))
 
@@ -1132,8 +1134,8 @@ class NullTraceApp(ctk.CTk):
         header = self._page_header(record["title"],
                                    f"{record['target'] or '—'}  ·  "
                                    f"{record['started'].replace('T', ' ')}  ·  {record['status']}")
-        ctk.CTkButton(header, text="← Back to history", width=140, height=28,
-                      corner_radius=7, fg_color="transparent", text_color=theme.MUTED,
+        ctk.CTkButton(header, text="← BACK", width=140, height=28,
+                      corner_radius=theme.RADIUS, fg_color="transparent", text_color=theme.MUTED,
                       hover_color=theme.ELEV, command=self._show_history,
                       anchor="w").grid(row=3, column=0, sticky="w", pady=(8, 0))
 
