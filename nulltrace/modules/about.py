@@ -6,6 +6,12 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.2.0", [
+        "Eight new modules: TLS Inspector, Wayback, BGP / ASN, DNS Propagation,",
+        "IP Reputation (DNSBL), Reverse IP, Site Files and File Triage.",
+        "One red 1px edge on every surface, with rules separating the sidebar,",
+        "top bar and content.",
+    ]),
     ("1.1.2", [
         "Interface text is larger by default (115%) with A- / A+ controls to scale",
         "every font between 100% and 140%; the choice is stored in the config.",
