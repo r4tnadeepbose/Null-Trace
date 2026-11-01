@@ -565,6 +565,17 @@ class NullTraceApp(ctk.CTk):
         lower.grid_columnconfigure(0, weight=3)
         lower.grid_columnconfigure(1, weight=2)
         lower.grid_rowconfigure(0, weight=1)
+        # clamp the card area to the window so a card can never grow past the
+        # bottom edge and show an open corner
+        self.update_idletasks()
+        used = (header.winfo_reqheight() + stats.winfo_reqheight() + 22 + 10 + 12 + 16)
+        available = max(300, self.body.winfo_height() - used)
+        lower.configure(height=available)
+        lower.grid_propagate(False)
+        self._lower_frame = lower
+        self._header_frame = header
+        self._stats_frame = stats
+        self.body.bind("<Configure>", self._refit_dashboard)
 
         # ---- left card -------------------------------------------------
         left = self._card(lower)
@@ -713,6 +724,20 @@ class NullTraceApp(ctk.CTk):
                      anchor="w", justify="left", wraplength=theme.px(320),
                      font=theme.mono(9), text_color=theme.FAINT
                      ).pack(fill="x", padx=18, pady=(0, 12))
+
+    def _refit_dashboard(self, _event=None) -> None:
+        lower = getattr(self, "_lower_frame", None)
+        if self.view != "dashboard" or lower is None or not lower.winfo_exists():
+            return
+        header = getattr(self, "_header_frame", None)
+        stats = getattr(self, "_stats_frame", None)
+        if header is None or stats is None:
+            return
+        used = (header.winfo_reqheight() + stats.winfo_reqheight() + 22 + 10 + 12 + 16)
+        self.update_idletasks()
+        available = max(300, self.body.winfo_height() - used)
+        if abs(available - lower.winfo_height()) > 1:
+            lower.configure(height=available)
 
     # ------------------------------------------------------------------ module view
     def _select_module(self, module_id: str) -> None:
