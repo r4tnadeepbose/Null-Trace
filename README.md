@@ -7,8 +7,6 @@
 Open-source intelligence workbench — a desktop application, written in Python, that
 consolidates 48 recon tools into one dark, local-first GUI.
 
-**Built by Ratnadeep Bose** · [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose)
-
 Everything runs on your machine. Scans go straight from your network to the upstream
 source; nothing is proxied through a Null-Trace server, because there isn't one.
 
@@ -48,7 +46,7 @@ Dashboard — run counters, quick start, recent runs, the module browser and env
 ### Windows (PowerShell)
 
 ```powershell
-cd C:\Users\boser\Downloads\NullTrace
+cd path\to\NullTrace
 python -m venv .venv
 .\.venv\Scripts\python -m pip install --upgrade pip
 .\.venv\Scripts\python -m pip install -r requirements.txt
@@ -284,13 +282,11 @@ resolution 128 lookups at a time. Lower `timeout` before widening ranges; a
 /16 sweep still takes minutes because it is 65,535 round trips, not because of
 Python.
 
-## Author
+## Credits
 
-**Ratnadeep Bose** (he/him) — [github.com/r4tnadeepbose](https://github.com/r4tnadeepbose?tab=repositories)
-
-Null-Trace is an independent Python rewrite inspired by the open-source TermuxHackz
-X-osint tool. Third-party data providers are credited in **About → Credits** inside
-the application.
+Null-Trace is an independent Python project. Its module set was inspired by the
+open-source TermuxHackz X-osint tool. Third-party data providers are credited in
+**About → Credits** inside the application.
 
 ## Legal
 
@@ -314,7 +310,7 @@ law in your jurisdiction.** Full terms: [legal/DISCLAIMER.md](legal/DISCLAIMER.m
 
 ## License
 
-MIT © 2026 Ratnadeep Bose — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
 You may use, modify and redistribute it, including commercially, provided the
 copyright notice and licence text stay with the software. It comes with no warranty.
