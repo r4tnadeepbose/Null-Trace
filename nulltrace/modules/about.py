@@ -7,12 +7,18 @@ from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
     ("1.4.0", [
-        "Sherlock is inside Null-Trace now: the 0.16.2 engine ships vendored at",
-        "sherlock_project/ (MIT) behind a new 'Sherlock Username OSINT' module.",
-        "Full 480-site manifest with per-site signatures, upstream false-positive",
-        "exclusions, NSFW scope, live or bundled manifest, {?} and separator",
-        "variants, proxy or local Tor, WAF/429 accounting and txt/csv/json/xlsx",
-        "reports. 49 modules now; scan.py --sherlock still gives upstream CLI flags.",
+        "New 'Username OSINT' module: one handle against the full 480-site",
+        "public-profile manifest, using a vendored MIT probing engine",
+        "(sherlock_project/) behind nulltrace/osint_engine.py.",
+        "Per-site signatures, upstream false-positive exclusions, NSFW scope,",
+        "live or bundled manifest, {?} and separator variants, proxy or local",
+        "Tor, and WAF/429 accounting instead of silently dropping them.",
+        "Results go to a self-contained HTML report that opens itself when the",
+        "scan ends — untick the checkbox to keep everything in the pane.",
+        "txt/csv/json/xlsx exports too. 49 modules now; scan.py --probe-cli",
+        "still gives the upstream CLI flags.",
+        "Output pane: the inner box border is gone and the mouse wheel scrolls",
+        "properly, including long result tables.",
         "Dependencies: requests-futures, colorama, openpyxl — deliberately no pandas.",
     ]),
     ("1.3.2", [

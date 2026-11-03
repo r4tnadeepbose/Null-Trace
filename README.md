@@ -93,8 +93,8 @@ python scan.py --run ip_info   -a target=1.1.1.1
 python scan.py --run dns_lookup -a domain=example.com -a rtype=MX
 python scan.py --run port_scan  -a host=example.com -a ports=22,80,443 -a timeout=1.5
 python scan.py --run cve_research -a query=CVE-2021-44228
-python scan.py --run sherlock_scan -a usernames=nasa -a only_sites=github,gitlab -a save=1
-python scan.py --sherlock nasa --site github --csv   # upstream Sherlock CLI, vendored
+python scan.py --run username_osint -a usernames=nasa -a only_sites=github,gitlab -a save=1
+python scan.py --probe-cli nasa --site github --csv   # upstream username-probing CLI, vendored
 ```
 
 `-a key=value` maps to the same fields the GUI shows. Checkboxes accept
@@ -137,7 +137,7 @@ python scan.py --sherlock nasa --site github --csv   # upstream Sherlock CLI, ve
 | Identity | Email Finder | Hunter.io search + pattern candidates + SMTP probes | Hunter |
 | Identity | Exposure Audit | Self-audit: breaches, stealers, mail posture, risk score | HIBP |
 | Identity | Email Headers | Hop chain, SPF/DKIM/DMARC parsing, spoofing verdict | — |
-| Identity | **Sherlock Username OSINT** | The vendored Sherlock 0.16.2 engine: one handle across the full 480-site manifest, per-site signatures, upstream exclusions, NSFW scope, proxy or Tor, txt/csv/json/xlsx | — |
+| Identity | **Username OSINT** | One handle across the full 480-site manifest: per-site signatures, upstream exclusions, NSFW scope, proxy or Tor. Writes an HTML report and opens it when the scan ends — untick the checkbox to keep everything in the output pane instead. Also exports txt/csv/json/xlsx | — |
 | Identity | Username Scan | Handle presence across 17 public platforms | — |
 | Identity | Phone Intel | Validity, carrier, region, timezone, fraud score | Numverify/IPQS |
 | Identity | Infostealer Exposure | Hudson Rock Cavalier malware-log lookups | — |

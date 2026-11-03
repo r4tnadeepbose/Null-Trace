@@ -35,7 +35,7 @@ Generated from `nulltrace/modules/__init__.py` — 49 modules.
 | **Email Finder** | `email_finder` | Identity | domain*, first, last, smtp (checkbox) | hunter |
 | **Exposure Audit** | `exposure_audit` | Identity | email, phone, name, breach (checkbox), stealer (checkbox), dns (checkbox), footprint (checkbox) | hibp |
 | **Phone Intel** | `phone_info` | Identity | number*, region | numverify, ipqualityscore |
-| **Sherlock Username OSINT** | `sherlock_scan` | Identity | usernames* (multiline), scope (choice), manifest (choice), custom_manifest, only_sites, skip_sites, timeout, proxy, exclusions (checkbox), variants (checkbox), tor (checkbox), print_all (checkbox), list_sites (checkbox), browse (checkbox), save (checkbox), xlsx (checkbox) | — |
+| **Username OSINT** | `username_osint` | Identity | usernames* (multiline), scope (choice), manifest (choice), custom_manifest, only_sites, skip_sites, timeout, proxy, html (checkbox), exclusions (checkbox), variants (checkbox), tor (checkbox), print_all (checkbox), list_sites (checkbox), browse (checkbox), save (checkbox), xlsx (checkbox) | — |
 | **Username Scan** | `username_scan` | Identity | username*, scope (choice) | — |
 | **Email Headers** | `email_headers` | Identity | raw* (multiline), geo (checkbox) | — |
 | **SMTP Analysis** | `smtp` | Identity | domain*, recipient, starttls (checkbox) | — |
@@ -182,20 +182,25 @@ Self-audit: breaches, stealer logs, mail posture and public footprint in one sco
 
 Offline validity, carrier, region and timezone; optional Numverify and IPQS enrichment.
 
-### Sherlock Username OSINT (`sherlock_scan`)
+### Username OSINT (`username_osint`)
 
-The vendored Sherlock 0.16.2 engine, end to end: 418–480 sites from the upstream
-manifest, probed with each site's own signature (status codes, expected strings,
+The vendored 0.16.2 probing engine, end to end: 418–480 sites from its manifest,
+each checked against its own signature (status codes, expected strings,
 `soft404`, POST payloads and per-site headers). Mirrors the upstream flags —
 `--site`, `--nsfw`, `--ignore-exclusions`, `--proxy`, `--timeout`, `--print-all`,
 `--browse`, `{?}` variants, `--json` custom site list and txt/csv/json/xlsx export —
 and adds a "never probe these" filter, local Tor detection and live progress in
 the GUI.
 
-Results are grouped as matched, clear, and inconclusive (WAF, 429, connection
-error, site-rule rejection) instead of hiding the noisy ones. Reports land in
-`%APPDATA%/Null-Trace/sherlock/`. The full upstream CLI is also reachable with
-`python scan.py --sherlock user123 --site github --csv`.
+By default the results are written to a standalone HTML page and that page opens
+itself when the scan ends; the pane then shows only the summary. Untick "Open the
+HTML report when the scan ends" to print the full tables in the pane instead. The
+page is self-contained (inline CSS, no scripts fetched, every cell escaped), groups
+sites as matched / clear / inconclusive with the reason for each inconclusive
+answer, and has a live filter box.
+
+Reports land in `%APPDATA%/Null-Trace/username-osint/`. The full upstream CLI is
+also reachable with `python scan.py --probe-cli user123 --site github --csv`.
 
 ### Username Scan (`username_scan`)
 

@@ -17,8 +17,8 @@ the queries you send them.
 | beautifulsoup4 | MIT | Ahmia result parsing |
 | speedtest-cli | Apache-2.0 | throughput test |
 | PySocks | BSD-3-Clause | Tor SOCKS transport |
-| requests-futures | Apache-2.0 | threaded probes in the Sherlock engine |
-| colorama | MIT | ANSI handling inside the Sherlock engine |
+| requests-futures | Apache-2.0 | threaded probes in the vendored engine |
+| colorama | MIT | ANSI handling inside the vendored engine |
 | openpyxl | MIT | .xlsx report writer |
 
 ## Vendored software
@@ -43,7 +43,9 @@ Everything else runs as upstream: per-site probe methods, `soft404` handling,
 `errorUrl`/`errorMsg` signatures, WAF detection, the live manifest at
 `data.sherlockproject.xyz`, the false-positive exclusion list at
 `raw.githubusercontent.com/sherlock-project/sherlock` and the CLI, reachable via
-`python scan.py --sherlock ...`.
+`python scan.py --probe-cli ...`. Inside Null-Trace the feature is exposed as the
+"Username OSINT" module; the upstream name appears only here and in the vendored
+package path.
 
 ## Data sources
 
