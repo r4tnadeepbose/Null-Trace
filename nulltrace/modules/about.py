@@ -9,7 +9,7 @@ CHANGELOG = [
     ("1.4.0", [
         "New 'Username OSINT' module: one handle against the full 480-site",
         "public-profile manifest, using a vendored MIT probing engine",
-        "(sherlock_project/) behind nulltrace/osint_engine.py.",
+        "(username_probe/) behind nulltrace/osint_engine.py.",
         "Per-site signatures, upstream false-positive exclusions, NSFW scope,",
         "live or bundled manifest, {?} and separator variants, proxy or local",
         "Tor, and WAF/429 accounting instead of silently dropping them.",

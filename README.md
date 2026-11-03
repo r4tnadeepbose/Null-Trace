@@ -215,7 +215,7 @@ Null-Trace/
 ├── nulltrace/    application package (gui, modules, transport, storage)
 ├── packaging/    PyInstaller spec and Windows build script
 ├── scripts/      developer checks
-├── sherlock_project/  vendored Sherlock 0.16.2 engine — MIT, see legal/THIRD_PARTY.md
+├── username_probe/  vendored 0.16.2 probing engine — MIT, see legal/THIRD_PARTY.md
 ├── tests/        offline unit tests
 ├── scan.py       entry point (GUI and headless)
 ├── LICENSE       MIT

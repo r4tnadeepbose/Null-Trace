@@ -22,7 +22,7 @@ from nulltrace.osint_engine import (BUNDLED_MANIFEST, SiteRow, build_plan,
                                         parse_usernames, probe, site_names,
                                         slowest, summarize, write_report)
 
-from sherlock_project.result import QueryResult, QueryStatus
+from username_probe.result import QueryResult, QueryStatus
 
 
 def _result(site: str, status: QueryStatus, context: str | None = None,
@@ -279,15 +279,15 @@ class HtmlReportTests(unittest.TestCase):
 class VendoringTests(unittest.TestCase):
     def test_pandas_is_not_imported_at_module_level(self) -> None:
         root = Path(__file__).resolve().parents[1]
-        source = (root / "sherlock_project" / "sherlock.py").read_text(encoding="utf-8")
+        source = (root / "username_probe" / "probe.py").read_text(encoding="utf-8")
         head = "\n".join(source.splitlines()[:45])
         self.assertNotIn("import pandas", head)
         self.assertIn("openpyxl", source)
 
     def test_license_and_notice_ship_with_the_engine(self) -> None:
         root = Path(__file__).resolve().parents[1]
-        self.assertTrue((root / "sherlock_project" / "LICENSE").is_file())
-        self.assertTrue((root / "sherlock_project" / "resources" / "data.schema.json").is_file())
+        self.assertTrue((root / "username_probe" / "LICENSE").is_file())
+        self.assertTrue((root / "username_probe" / "resources" / "data.schema.json").is_file())
 
     def test_module_registered(self) -> None:
         from nulltrace.modules import find
@@ -302,11 +302,26 @@ class VendoringTests(unittest.TestCase):
 
     def test_probe_signature_survives_upstream(self) -> None:
         import inspect
-        from sherlock_project.sherlock import sherlock
-        parameters = inspect.signature(sherlock).parameters
+        from username_probe.probe import probe_usernames
+        parameters = inspect.signature(probe_usernames).parameters
         for name in ("username", "site_data", "query_notify", "proxy", "timeout"):
             self.assertIn(name, parameters)
         self.assertTrue(callable(probe))
+
+    def test_engine_brand_stays_out_of_readable_text(self) -> None:
+        """The feature is Username OSINT; the upstream name is only an endpoint URL."""
+        root = Path(__file__).resolve().parents[1]
+        surfaces = sorted((root / "nulltrace" / "modules").glob("*.py"))
+        surfaces += sorted((root / "nulltrace" / "gui").glob("*.py"))
+        surfaces += [root / "nulltrace" / "osint_engine.py", root / "scan.py",
+                     root / "README.md", root / "run.bat"]
+        surfaces += sorted((root / "docs").glob("*.md"))
+        offenders = []
+        for path in surfaces:
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if "sherlock" in line.casefold() and "http" not in line:
+                    offenders.append(f"{path.name}: {line.strip()[:70]}")
+        self.assertEqual([], offenders)
 
 
 if __name__ == "__main__":

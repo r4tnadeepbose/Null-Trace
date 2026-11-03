@@ -17,11 +17,11 @@ ROOT = Path(SPECPATH).parent
 datas = [(str(ROOT / "data"), "data"),
          (str(ROOT / "assets" / "app.ico"), "assets"),
          (str(ROOT / "assets" / "app.png"), "assets"),
-         (str(ROOT / "sherlock_project" / "resources" / "data.json"),
-          "sherlock_project/resources"),
-         (str(ROOT / "sherlock_project" / "resources" / "data.schema.json"),
-          "sherlock_project/resources"),
-         (str(ROOT / "sherlock_project" / "LICENSE"), "sherlock_project")]
+         (str(ROOT / "username_probe" / "resources" / "data.json"),
+          "username_probe/resources"),
+         (str(ROOT / "username_probe" / "resources" / "data.schema.json"),
+          "username_probe/resources"),
+         (str(ROOT / "username_probe" / "LICENSE"), "username_probe")]
 datas += collect_data_files("customtkinter")
 hiddenimports = collect_submodules("customtkinter") + [
     "dns.resolver",
@@ -36,9 +36,9 @@ hiddenimports = collect_submodules("customtkinter") + [
     "openpyxl",
     "socks",
 ]
-# The Sherlock engine is imported lazily, so PyInstaller cannot see it from
+# The probe engine is imported lazily, so PyInstaller cannot see it from
 # scan.py; collect it explicitly.
-hiddenimports += collect_submodules("sherlock_project")
+hiddenimports += collect_submodules("username_probe")
 
 a = Analysis(
     [str(ROOT / "scan.py")],

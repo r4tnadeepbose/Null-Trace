@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 """
-Sherlock: Find Usernames Across Social Networks Module
+Username Probe: Find Handles Across Public Profiles
 
 This module contains the main logic to search for usernames at social
 networks.
@@ -15,8 +15,8 @@ if __name__ == "__main__":
     python_version = sys.version.split()[0]
 
     if sys.version_info < (3, 9):
-        print(f"Sherlock requires Python 3.9+\nYou are using Python {python_version}, which is not supported by Sherlock.")
+        print(f"Username Probe requires Python 3.9+\nYou are using Python {python_version}, which is not supported.")
         sys.exit(1)
 
-    from sherlock_project import sherlock
-    sherlock.main()
+    from username_probe import probe
+    probe.main()

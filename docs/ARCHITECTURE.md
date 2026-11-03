@@ -130,13 +130,19 @@ aborting the sweep. The run ends with a findings table.
 
 ## Vendored username-probing engine
 
-`sherlock_project/` at the repository root is Sherlock 0.16.2, kept as a separate
-top-level package rather than rewritten into a Null-Trace module: the manifest and
-its per-site probe signatures are the value, and staying close to upstream means a
-new release can be dropped in without re-auditing 900 lines of probing logic. Two
-patches are marked in the file (a pinned version string and an openpyxl `.xlsx`
-writer instead of pandas). The attribution and the exact patch list live in
-`legal/THIRD_PARTY.md`.
+`username_probe/` at the repository root is the 0.16.2 username-probing engine,
+carried as a separate top-level package rather than rewritten into a Null-Trace
+module: the manifest and its per-site probe signatures are the value, and keeping
+the probing logic as one auditable blob means a new release can be dropped in
+without re-reading 900 lines. The cost is that upstream ships under its own name,
+so the package, its entry module and its entry function are renamed here —
+`username_probe/probe.py::probe_usernames()` — and a future drop-in needs the same
+rename replayed. Four local patches are marked in the files: a pinned version
+string that needs no installed package metadata, an openpyxl `.xlsx` writer
+instead of pandas, the upstream promotion footer removed from the notify path, and
+the rename itself. The upstream project and its licence are named in
+`legal/THIRD_PARTY.md`, in the bundled `username_probe/LICENSE`, and nowhere a
+user can see them; inside the app the feature is only ever "Username OSINT".
 
 Null-Trace never calls the engine directly from a module. `nulltrace/osint_engine.py`
 is the only bridge: it builds the site plan, converts an upstream `QueryResult`

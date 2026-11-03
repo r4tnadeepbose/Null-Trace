@@ -123,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.probe_cli:
         _bootstrap()
         sys.argv = ["probe", *extra]
-        from sherlock_project.sherlock import main as probe_main
+        from username_probe.probe import main as probe_main
         probe_main()
         return 0
 

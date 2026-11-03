@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 """
-Sherlock: Find Usernames Across Social Networks Module
+Username Probe: Find Handles Across Public Profiles
 
 This module contains the main logic to search for usernames at social
 networks.
@@ -10,10 +10,10 @@ networks.
 import sys
 
 try:
-    from sherlock_project.__init__ import import_error_test_var # noqa: F401
+    from username_probe.__init__ import import_error_test_var # noqa: F401
 except ImportError:
-    print("Did you run Sherlock with `python3 sherlock/sherlock.py ...`?")
-    print("This is an outdated method. Please see https://sherlockproject.xyz/installation for up to date instructions.")
+    print("Run this as a package, not as a loose script:")
+    print("    python -m username_probe <username>")
     sys.exit(1)
 
 import csv
@@ -28,23 +28,23 @@ from typing import Optional
 import requests
 from requests_futures.sessions import FuturesSession
 
-from sherlock_project.__init__ import (
+from username_probe.__init__ import (
     __longname__,
     __shortname__,
     __version__,
     forge_api_latest_release,
 )
 
-from sherlock_project.result import QueryStatus
-from sherlock_project.result import QueryResult
-from sherlock_project.notify import QueryNotify
-from sherlock_project.notify import QueryNotifyPrint
-from sherlock_project.sites import SitesInformation
+from username_probe.result import QueryStatus
+from username_probe.result import QueryResult
+from username_probe.notify import QueryNotify
+from username_probe.notify import QueryNotifyPrint
+from username_probe.sites import SitesInformation
 from colorama import init
 from argparse import ArgumentTypeError
 
 
-class SherlockFuturesSession(FuturesSession):
+class ProbeFuturesSession(FuturesSession):
     def request(self, method, url, hooks=None, *args, **kwargs):
         """Request URL.
 
@@ -103,7 +103,7 @@ class SherlockFuturesSession(FuturesSession):
             # No response hook was already defined, so install it ourselves.
             hooks["response"] = [response_time]
 
-        return super(SherlockFuturesSession, self).request(
+        return super(ProbeFuturesSession, self).request(
             method, url, hooks=hooks, *args, **kwargs
         )
 
@@ -153,7 +153,7 @@ def interpolate_string(input_object, username):
 
 def check_for_parameter(username):
     """checks if {?} exists in the username
-    if exist it means that sherlock is looking for more multiple username"""
+    if exist it means that the probe is looking for more multiple username"""
     return "{?}" in username
 
 
@@ -168,7 +168,7 @@ def multiple_usernames(username):
     return allUsernames
 
 
-def sherlock(
+def probe_usernames(
     username: str,
     site_data: dict[str, dict[str, str]],
     query_notify: QueryNotify,
@@ -176,7 +176,7 @@ def sherlock(
     proxy: Optional[str] = None,
     timeout: int = 60,
 ) -> dict[str, dict[str, str | QueryResult]]:
-    """Run Sherlock Analysis.
+    """Run the username probe.
 
     Checks for existence of username on various social media sites.
 
@@ -219,7 +219,7 @@ def sherlock(
         max_workers = len(site_data)
 
     # Create multi-threaded session for all requests.
-    session = SherlockFuturesSession(
+    session = ProbeFuturesSession(
         max_workers=max_workers, session=underlying_session
     )
 
@@ -378,7 +378,7 @@ def sherlock(
         query_status = QueryStatus.UNKNOWN
         error_context = None
 
-        # As WAFs advance and evolve, they will occasionally block Sherlock and
+        # As WAFs advance and evolve, they will occasionally block the prober and
         # lead to false positives and negatives. Fingerprints should be added
         # here to filter results that fail to bypass WAFs. Fingerprints should
         # be highly targetted. Comment at the end of each fingerprint to
@@ -697,7 +697,7 @@ def main():
     # If the user presses CTRL-C, exit gracefully without throwing errors
     signal.signal(signal.SIGINT, handler)
 
-    # Check for newer version of Sherlock. If it exists, let the user know about it
+    # Check for a newer engine release; tell the user if one exists.
     try:
         latest_release_raw = requests.get(forge_api_latest_release, timeout=10).text
         latest_release_json = json_loads(latest_release_raw)
@@ -812,7 +812,7 @@ def main():
         else:
             all_usernames.append(username)
     for username in all_usernames:
-        results = sherlock(
+        results = probe_usernames(
             username,
             site_data,
             query_notify,

@@ -1,9 +1,9 @@
-"""Sherlock Notify Module
+"""Notify Module
 
 This module defines the objects for notifying the caller about the
 results of queries.
 """
-from sherlock_project.result import QueryStatus
+from username_probe.result import QueryStatus
 from colorama import Fore, Style
 import webbrowser
 
@@ -266,9 +266,6 @@ class QueryNotifyPrint(QueryNotify):
               Fore.WHITE + f" {NumberOfResults} " +
               Fore.GREEN + "results" + Style.RESET_ALL
               )
-
-        print("\nGo deeper than a username. Explore public profiles and export your findings.")
-        print("Try OSINTSearch: \033]8;;https://osintsearch.org/go/sherlock\033\\https://osintsearch.org\033]8;;\033\\")
 
     def __str__(self):
         """Convert Object To String.

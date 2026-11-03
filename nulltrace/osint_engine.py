@@ -1,12 +1,13 @@
 """Bridge between Null-Trace and the vendored username-probe engine.
 
 The user-facing feature is called Username OSINT; the engine behind it is the
-``sherlock_project/`` package at the repo root (MIT, Sherlock 0.16.2, see
-legal/THIRD_PARTY.md), kept as upstream code with two local patches: a
-packaging-free version string and an openpyxl .xlsx writer instead of pandas.
-Everything else — the 480-site manifest, the per-site probe methods, soft404
-handling, upstream false-positive exclusions and WAF detection — is upstream
-behaviour reached through this module.
+``username_probe/`` package at the repo root (MIT — upstream and licence are
+named in legal/THIRD_PARTY.md), carried with local patches: a packaging-free
+version string, an openpyxl .xlsx writer instead of pandas, the upstream
+promotion footer removed, and the whole package renamed so no third-party brand
+reaches the UI. Everything else — the 480-site manifest, the per-site probe
+methods, soft404 handling, upstream false-positive exclusions and WAF detection
+— is upstream behaviour reached through this module.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from typing import Callable, Iterable
 from .config import data_dir
 
 ROOT = Path(__file__).resolve().parent.parent
-RESOURCES = Path("sherlock_project") / "resources"
+RESOURCES = Path("username_probe") / "resources"
 
 
 def resource_path(name: str) -> Path:
@@ -43,19 +44,19 @@ class EngineError(RuntimeError):
 
 def _ready() -> None:
     try:
-        import sherlock_project  # noqa: F401
+        import username_probe  # noqa: F401
     except ImportError:
         sys.path.insert(0, str(ROOT))
     try:
-        import sherlock_project  # noqa: F401
+        import username_probe  # noqa: F401
     except ImportError as exc:  # broken install, say so plainly
-        raise EngineError(f"Vendored Sherlock engine is missing or broken: {exc}") from exc
+        raise EngineError(f"Vendored probe engine is missing or broken: {exc}") from exc
 
 
 def manifest_version() -> str:
     """Version of the vendored probe engine, which the manifest ships with."""
     _ready()
-    from sherlock_project import __version__
+    from username_probe import __version__
     return __version__
 
 
@@ -88,14 +89,14 @@ def build_plan(*, live: bool = False, manifest_path: str | None = None,
                only: Iterable[str] = (),
                skip: Iterable[str] = (), include_nsfw: bool = False,
                honor_exclusions: bool = True) -> SitePlan:
-    """Assemble site data the way upstream ``sherlock`` does.
+    """Assemble site data the way the upstream engine does.
 
     ``only`` mirrors ``--site``, ``skip`` is a Null-Trace extra (never probe
     these), ``honor_exclusions`` mirrors ``--ignore-exclusions``,
     ``include_nsfw`` mirrors ``--nsfw`` and ``manifest_path`` mirrors ``--json``.
     """
     _ready()
-    from sherlock_project.sites import SitesInformation
+    from username_probe.sites import SitesInformation
 
     only_list = [s.strip() for s in only if s and s.strip()]
     if manifest_path:
@@ -170,12 +171,12 @@ class SiteRow:
 def _make_collector(on_result: Callable[[SiteRow], None] | None, cancel):
     """Build a QueryNotify that collects rows and aborts on request.
 
-    ``sherlock()`` calls ``update()`` once per site from its result loop, and
+    ``probe_usernames()`` calls ``update()`` once per site from its result loop, and
     nothing inside that loop catches a raised exception, so raising here is the
     supported way to honour the Stop button.
     """
     _ready()
-    from sherlock_project.notify import QueryNotify
+    from username_probe.notify import QueryNotify
 
     class Collector(QueryNotify):
         def __init__(self) -> None:
@@ -202,7 +203,7 @@ def _make_collector(on_result: Callable[[SiteRow], None] | None, cancel):
 
 def classify(result) -> SiteRow:
     """Map an upstream QueryResult onto a Null-Trace table row."""
-    from sherlock_project.result import QueryStatus
+    from username_probe.result import QueryStatus
 
     status = result.status
     verdict = str(status)
@@ -235,7 +236,7 @@ def probe(username: str, site_data: dict, *, proxy: str | None = None,
           ) -> tuple[list[SiteRow], bool, float]:
     """Run one username over the whole plan. Returns rows, aborted, elapsed."""
     _ready()
-    from sherlock_project.sherlock import sherlock
+    from username_probe.probe import probe_usernames
 
     from .net import Cancelled
 
@@ -244,7 +245,7 @@ def probe(username: str, site_data: dict, *, proxy: str | None = None,
     raw: dict | None = None
     aborted = False
     try:
-        raw = sherlock(username, site_data, collector,
+        raw = probe_usernames(username, site_data, collector,
                        dump_response=dump_response, proxy=proxy or None,
                        timeout=int(timeout))
     except Cancelled:
@@ -270,7 +271,7 @@ def probe(username: str, site_data: dict, *, proxy: str | None = None,
 def expand_variants(username: str) -> list[str]:
     """Expand ``name{?}tail`` into the three separator variants upstream uses."""
     _ready()
-    from sherlock_project.sherlock import check_for_parameter, multiple_usernames
+    from username_probe.probe import check_for_parameter, multiple_usernames
 
     if check_for_parameter(username):
         return multiple_usernames(username)
