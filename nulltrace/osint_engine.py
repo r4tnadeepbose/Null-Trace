@@ -38,6 +38,28 @@ BUNDLED_MANIFEST = resource_path("data.json")
 LIVE_MANIFEST = "https://data.sherlockproject.xyz"
 
 
+def _engine_hosts() -> tuple[str, ...]:
+    """Hostnames the vendored engine fetches from, read back from its own code."""
+    from urllib.parse import urlparse
+
+    from username_probe import sites as engine_sites
+    urls = {LIVE_MANIFEST, engine_sites.MANIFEST_URL, engine_sites.EXCLUSIONS_URL}
+    hosts = {urlparse(url).netloc for url in urls if "://" in url}
+    return tuple(sorted((host for host in hosts if host), key=len, reverse=True))
+
+
+def _hide_endpoints(text: str) -> str:
+    """Keep the engine's upstream hosts out of anything a user reads.
+
+    A failed fetch quotes the address it could not reach inside its exception —
+    sometimes as a full URL, sometimes as ``host='...'`` — so the hostname
+    itself is what gets replaced.
+    """
+    for host in _engine_hosts():
+        text = text.replace(host, "the manifest host")
+    return text.strip()
+
+
 class EngineError(RuntimeError):
     """The vendored engine could not be imported."""
 
@@ -79,6 +101,7 @@ class SitePlan:
 
     site_data: dict = field(default_factory=dict)
     manifest: str = ""
+    source: str = ""
     manifest_error: str = ""
     honor_exclusions: bool = True
     nsfw_total: int = 0
@@ -100,25 +123,30 @@ def build_plan(*, live: bool = False, manifest_path: str | None = None,
 
     only_list = [s.strip() for s in only if s and s.strip()]
     if manifest_path:
-        manifest = manifest_path
+        source = manifest_path
+        label = f"your own site list ({Path(manifest_path).name})"
     elif live:
-        manifest = LIVE_MANIFEST
+        source = LIVE_MANIFEST
+        label = "live upstream manifest"
     else:
-        manifest = str(BUNDLED_MANIFEST)
-    plan = SitePlan(manifest=manifest, honor_exclusions=honor_exclusions)
+        source = str(BUNDLED_MANIFEST)
+        label = f"bundled manifest ({BUNDLED_MANIFEST.name})"
+    plan = SitePlan(manifest=label, source=source, honor_exclusions=honor_exclusions)
 
     def _load(path: str, honor: bool) -> SitesInformation:
         return SitesInformation(data_file_path=path, honor_exclusions=honor,
                                 do_not_exclude=only_list)
 
     try:
-        sites = _load(manifest, honor_exclusions)
+        sites = _load(source, honor_exclusions)
     except Exception as exc:  # manifest unreachable or malformed
-        plan.manifest_error = str(exc).strip().splitlines()[0][:180]
-        if manifest == LIVE_MANIFEST:
+        plan.manifest_error = _hide_endpoints(str(exc).strip().splitlines()[0][:180])
+        if source == LIVE_MANIFEST:
             # The live manifest needs network; fall back to the bundled copy.
-            plan.manifest = str(BUNDLED_MANIFEST)
-            sites = _load(plan.manifest, honor_exclusions)
+            source = str(BUNDLED_MANIFEST)
+            plan.source = source
+            plan.manifest = f"bundled manifest ({BUNDLED_MANIFEST.name}), live one unreachable"
+            sites = _load(source, honor_exclusions)
         else:
             raise
     if plan.manifest_error:

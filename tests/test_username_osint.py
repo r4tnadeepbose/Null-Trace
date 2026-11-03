@@ -16,7 +16,8 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from nulltrace.net import Cancelled
-from nulltrace.osint_engine import (BUNDLED_MANIFEST, SiteRow, build_plan,
+from nulltrace.osint_engine import (BUNDLED_MANIFEST, LIVE_MANIFEST, SiteRow,
+                                        build_plan,
                                         classify, manifest_version, expand_variants,
                                         missing_dependency, output_dir,
                                         parse_usernames, probe, site_names,
@@ -46,7 +47,8 @@ class ManifestTests(unittest.TestCase):
     def test_plan_offline_without_exclusions(self) -> None:
         plan = build_plan(honor_exclusions=False, include_nsfw=True)
         self.assertGreaterEqual(len(plan.site_data), 400)
-        self.assertEqual(plan.manifest, str(BUNDLED_MANIFEST))
+        self.assertEqual(plan.source, str(BUNDLED_MANIFEST))
+        self.assertEqual(plan.manifest, "bundled manifest (data.json)")
         self.assertGreater(plan.nsfw_total, 0)
 
     def test_nsfw_scope_is_a_real_filter(self) -> None:
@@ -74,7 +76,8 @@ class ManifestTests(unittest.TestCase):
             path.write_text(json.dumps(subset), encoding="utf-8")
             plan = build_plan(manifest_path=str(path), honor_exclusions=False)
         self.assertEqual(site_names(plan.site_data), ["OnlyTest"])
-        self.assertEqual(plan.manifest, str(path))
+        self.assertEqual(plan.source, str(path))
+        self.assertIn("your own site list", plan.manifest)
 
     def test_unreadable_custom_manifest_is_reported(self) -> None:
         with self.assertRaises(Exception):
@@ -86,8 +89,20 @@ class ManifestTests(unittest.TestCase):
         with mock.patch("nulltrace.osint_engine.LIVE_MANIFEST", dead):
             plan = build_plan(live=True, honor_exclusions=False, only=["GitHub"])
         self.assertTrue(plan.manifest_error, plan.manifest_error)
-        self.assertEqual(plan.manifest, str(BUNDLED_MANIFEST))
+        self.assertEqual(plan.source, str(BUNDLED_MANIFEST))
+        self.assertTrue(plan.manifest.startswith("bundled manifest"), plan.manifest)
         self.assertEqual(site_names(plan.site_data), ["GitHub"])
+
+    def test_error_text_never_shows_the_engines_own_hosts(self) -> None:
+        from urllib.parse import urlparse
+
+        from nulltrace.osint_engine import _hide_endpoints
+        host = urlparse(LIVE_MANIFEST).netloc
+        quoted = (f"HTTPSConnectionPool(host='{host}', port=443): "
+                  f"Max retries exceeded with url: /data.json")
+        cleaned = _hide_endpoints(quoted)
+        self.assertNotIn(host, cleaned)
+        self.assertIn("the manifest host", cleaned)
 
 
 class ClassificationTests(unittest.TestCase):
@@ -204,6 +219,18 @@ class ExportTests(unittest.TestCase):
         self.assertEqual(len(payload["results"]), 2)
         self.assertEqual(payload["results"][0]["url"], "https://github.com/tester")
 
+    def test_no_export_carries_the_upstream_identity(self) -> None:
+        """Neither the endpoint label nor the manifest address reaches a file."""
+        from urllib.parse import urlparse
+
+        from nulltrace.report_html import render
+        token = urlparse(LIVE_MANIFEST).netloc.split(".")[1]
+        blobs = [report.read_bytes().decode("utf-8", "replace") for report in self.paths]
+        blobs.append(render(self.username, self.rows,
+                            manifest="bundled manifest (data.json)"))
+        for blob in blobs:
+            self.assertNotIn(token, blob.casefold())
+
     def test_xlsx_opens(self) -> None:
         openpyxl = __import__("openpyxl")
         path = next(p for p in self.paths if p.suffix == ".xlsx")
@@ -309,17 +336,28 @@ class VendoringTests(unittest.TestCase):
         self.assertTrue(callable(probe))
 
     def test_engine_brand_stays_out_of_readable_text(self) -> None:
-        """The feature is Username OSINT; the upstream name is only an endpoint URL."""
+        """The feature is Username OSINT; the upstream name survives only as a
+        fetch address. The word is derived from the live-manifest hostname so
+        this test does not contain it either."""
+        import re
+        from urllib.parse import urlparse
+
+        host = urlparse(LIVE_MANIFEST).netloc.split(".", 1)[1]   # <name>project.xyz
+        match = re.match(r"[a-z]+(?=project)", host)
+        self.assertIsNotNone(match, LIVE_MANIFEST)
+        brand = match.group()
+
         root = Path(__file__).resolve().parents[1]
         surfaces = sorted((root / "nulltrace" / "modules").glob("*.py"))
         surfaces += sorted((root / "nulltrace" / "gui").glob("*.py"))
         surfaces += [root / "nulltrace" / "osint_engine.py", root / "scan.py",
                      root / "README.md", root / "run.bat"]
         surfaces += sorted((root / "docs").glob("*.md"))
+        surfaces += sorted((root / "username_probe").glob("*.py"))
         offenders = []
         for path in surfaces:
             for line in path.read_text(encoding="utf-8").splitlines():
-                if "sherlock" in line.casefold() and "http" not in line:
+                if brand in line.casefold() and "http" not in line:
                     offenders.append(f"{path.name}: {line.strip()[:70]}")
         self.assertEqual([], offenders)
 
