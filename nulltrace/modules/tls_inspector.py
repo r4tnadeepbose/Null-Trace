@@ -94,7 +94,7 @@ def run(ctx) -> None:
 
     ctx.section("Checks")
     if cert.get("verified") is False:
-        ctx.err("Browsers will warn: the chain does not validate against the trust store.")
+        ctx.error("Browsers will warn: the chain does not validate against the trust store.")
     if common.get("commonName", "").startswith("*."):
         ctx.note("The subject itself is a wildcard.")
 
