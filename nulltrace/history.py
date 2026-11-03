@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, Iterator
 
 from .config import data_dir
 
@@ -31,9 +32,25 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+@contextmanager
+def _db() -> Iterator[sqlite3.Connection]:
+    """A connection that is committed and closed, not just left dangling.
+
+    ``with conn`` alone only commits — sqlite3 connections are not closed by the
+    context manager, so every read used to leak a file handle.
+    """
+    with _LOCK:
+        conn = _connect()
+        try:
+            yield conn
+            conn.commit()
+        finally:
+            conn.close()
+
+
 def add_scan(module: str, title: str, target: str, started: datetime,
              status: str, lines: list[tuple[str, str]]) -> int:
-    with _LOCK, _connect() as conn:
+    with _db() as conn:
         cursor = conn.execute(
             "INSERT INTO scans (module, title, target, started, finished, status, lines)"
             " VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -45,7 +62,7 @@ def add_scan(module: str, title: str, target: str, started: datetime,
 
 
 def list_scans(limit: int = 500) -> list[dict[str, Any]]:
-    with _LOCK, _connect() as conn:
+    with _db() as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute(
             "SELECT id, module, title, target, started, status FROM scans"
@@ -55,7 +72,7 @@ def list_scans(limit: int = 500) -> list[dict[str, Any]]:
 
 
 def load_scan(scan_id: int) -> dict[str, Any] | None:
-    with _LOCK, _connect() as conn:
+    with _db() as conn:
         conn.row_factory = sqlite3.Row
         row = conn.execute("SELECT * FROM scans WHERE id = ?", (scan_id,)).fetchone()
     if not row:
@@ -66,10 +83,10 @@ def load_scan(scan_id: int) -> dict[str, Any] | None:
 
 
 def delete_scan(scan_id: int) -> None:
-    with _LOCK, _connect() as conn:
+    with _db() as conn:
         conn.execute("DELETE FROM scans WHERE id = ?", (scan_id,))
 
 
 def clear_history() -> None:
-    with _LOCK, _connect() as conn:
+    with _db() as conn:
         conn.execute("DELETE FROM scans")
