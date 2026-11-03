@@ -25,19 +25,21 @@ the queries you send them.
 
 ### Username-probe engine 0.16.2 (`username_probe/`)
 
-Copyright (c) Siddharth Dushantha and contributors, MIT licensed. The manifest
-(`resources/data.json`, 480 sites), its schema and the engine's `LICENSE` ship
-with Null-Trace in `username_probe/`. Source:
+Copyright (c) Siddharth Dushantha and contributors, MIT licensed. That line is
+the attribution the licence requires and stays exactly as upstream wrote it. The
+manifest (`resources/data.json`, 480 sites), its schema and the engine's `LICENSE`
+ship with Null-Trace in `username_probe/`. Source:
 <https://github.com/sherlock-project/sherlock> and
 <https://sherlockproject.xyz/>.
 
-Null-Trace applies four local patches, each marked in the code:
+Null-Trace applies five local patches, each marked in the code:
 
 | File | Change |
 |---|---|
 | package and module names | the package is carried as `username_probe/`, with `probe.py::probe_usernames()` as its entry, so no third-party brand reaches Null-Trace's UI or CLI output |
 | `__init__.py` | version string is pinned instead of read from installed package metadata (`tomli`) |
 | `probe.py` | the `.xlsx` export writes with `openpyxl` rather than `pandas`, so Null-Trace does not need pandas |
+| `probe.py` | the startup release check is removed — it contacted a third-party repository on every CLI run and printed that project's URL |
 | `notify.py` | the upstream promotional footer is not printed |
 
 Everything else runs as upstream: per-site probe methods, `soft404` handling,
@@ -45,9 +47,12 @@ Everything else runs as upstream: per-site probe methods, `soft404` handling,
 `data.sherlockproject.xyz`, the false-positive exclusion list at
 `raw.githubusercontent.com/sherlock-project/sherlock` and the CLI, reachable via
 `python scan.py --probe-cli ...`. Those three endpoints are upstream URLs — the
-engine can only fetch its own data from its own addresses, so they stay, and they
-are the only places outside this file where the upstream name still appears. The
-feature itself is called Username OSINT everywhere a user can see.
+engine can only fetch its own data from its own addresses, so they stay in the
+code as fetch targets. They are never shown to a user: a run labels its manifest
+as "bundled", "live upstream" or "your own site list", and the bridge strips the
+engine's hostnames out of any fetch error before it reaches the output pane. The
+feature is called Username OSINT everywhere a user can see, and the schema and
+data files carry no upstream branding either.
 
 ## Data sources
 

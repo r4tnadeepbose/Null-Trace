@@ -19,6 +19,9 @@ CHANGELOG = [
         "still gives the upstream CLI flags.",
         "Output pane: the inner box border is gone and the mouse wheel scrolls",
         "properly, including long result tables.",
+        "The engine's own identity stays out of sight: a run says where its sites",
+        "came from as 'bundled manifest', 'live upstream manifest' or 'your own",
+        "site list' — never a path, an address or a third-party name.",
         "Dependencies: requests-futures, colorama, openpyxl — deliberately no pandas.",
     ]),
     ("1.3.2", [

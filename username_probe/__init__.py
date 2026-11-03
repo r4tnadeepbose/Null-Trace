@@ -20,5 +20,3 @@ import_error_test_var = None
 __shortname__   = "Username Probe"
 __longname__    = "Username Probe: Find Handles Across Public Profiles"
 __version__     = get_version()
-
-forge_api_latest_release = "https://api.github.com/repos/sherlock-project/sherlock/releases/latest"

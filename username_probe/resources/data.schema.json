@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Sherlock Target Manifest",
+  "title": "Username Probe Target Manifest",
   "description": "Social media targets to probe for the existence of known usernames",
   "type": "object",
   "properties": {
@@ -22,7 +22,7 @@
         "request_payload": { "type": "object" },
         "__comment__": {
           "type": "string",
-          "description": "Used to clarify important target information if (and only if) a commit message would not suffice.\nThis key should not be parsed anywhere within Sherlock."
+          "description": "Used to clarify important target information if (and only if) a commit message would not suffice.\nThis key should not be parsed anywhere within the engine."
         },
         "tags": {
           "oneOf": [

@@ -32,7 +32,6 @@ from username_probe.__init__ import (
     __longname__,
     __shortname__,
     __version__,
-    forge_api_latest_release,
 )
 
 from username_probe.result import QueryStatus
@@ -697,20 +696,9 @@ def main():
     # If the user presses CTRL-C, exit gracefully without throwing errors
     signal.signal(signal.SIGINT, handler)
 
-    # Check for a newer engine release; tell the user if one exists.
-    try:
-        latest_release_raw = requests.get(forge_api_latest_release, timeout=10).text
-        latest_release_json = json_loads(latest_release_raw)
-        latest_remote_tag = latest_release_json["tag_name"]
-
-        if latest_remote_tag[1:] != __version__:
-            print(
-                f"Update available! {__version__} --> {latest_remote_tag[1:]}"
-                f"\n{latest_release_json['html_url']}"
-            )
-
-    except Exception as error:
-        print(f"A problem occurred while checking for an update: {error}")
+    # Null-Trace patch: the upstream release check is removed. It contacted a
+    # third-party repository on every CLI run and printed that project's URL,
+    # which has no place in this tool's output.
 
     # Make prompts
     if args.proxy is not None:

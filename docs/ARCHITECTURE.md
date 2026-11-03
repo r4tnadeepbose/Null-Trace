@@ -137,12 +137,21 @@ the probing logic as one auditable blob means a new release can be dropped in
 without re-reading 900 lines. The cost is that upstream ships under its own name,
 so the package, its entry module and its entry function are renamed here —
 `username_probe/probe.py::probe_usernames()` — and a future drop-in needs the same
-rename replayed. Four local patches are marked in the files: a pinned version
+rename replayed. Five local patches are marked in the files: a pinned version
 string that needs no installed package metadata, an openpyxl `.xlsx` writer
-instead of pandas, the upstream promotion footer removed from the notify path, and
-the rename itself. The upstream project and its licence are named in
-`legal/THIRD_PARTY.md`, in the bundled `username_probe/LICENSE`, and nowhere a
-user can see them; inside the app the feature is only ever "Username OSINT".
+instead of pandas, the upstream promotion footer removed from the notify path, the
+release check removed from the CLI entry, and the rename itself. The upstream
+project and its licence are named in `legal/THIRD_PARTY.md`, in the bundled
+`username_probe/LICENSE`, and nowhere a user can see them; inside the app the
+feature is only ever "Username OSINT".
+
+The same rule covers addresses. A plan reports where its sites came back as a
+label — "bundled manifest (data.json)", "live upstream manifest", "your own site
+list" — never as a fetch URL or a filesystem path, and manifest failures are
+scrubbed of the engine's own hostnames before they reach the output pane, so
+nothing the engine downloads leaves a trace in the pane, the history row or an
+exported report. A test derives the endpoint label from the live-manifest constant
+and asserts it appears in no export and in no app source file.
 
 Null-Trace never calls the engine directly from a module. `nulltrace/osint_engine.py`
 is the only bridge: it builds the site plan, converts an upstream `QueryResult`
