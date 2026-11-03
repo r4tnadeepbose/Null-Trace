@@ -80,7 +80,7 @@ class ManifestTests(unittest.TestCase):
         self.assertIn("your own site list", plan.manifest)
 
     def test_unreadable_custom_manifest_is_reported(self) -> None:
-        with self.assertRaises(Exception):
+        with self.assertRaises(FileNotFoundError):
             build_plan(manifest_path=str(Path("Z:/nope/missing.json")),
                        honor_exclusions=False)
 
@@ -96,11 +96,11 @@ class ManifestTests(unittest.TestCase):
     def test_error_text_never_shows_the_engines_own_hosts(self) -> None:
         from urllib.parse import urlparse
 
-        from nulltrace.osint_engine import _hide_endpoints
+        from nulltrace.osint_engine import scrub_endpoints
         host = urlparse(LIVE_MANIFEST).netloc
         quoted = (f"HTTPSConnectionPool(host='{host}', port=443): "
                   f"Max retries exceeded with url: /data.json")
-        cleaned = _hide_endpoints(quoted)
+        cleaned = scrub_endpoints(quoted)
         self.assertNotIn(host, cleaned)
         self.assertIn("the manifest host", cleaned)
 
@@ -177,6 +177,44 @@ class CancelTests(unittest.TestCase):
         self.assertEqual(set(collector.rows), {"x", "y"})
 
 
+class RateLimitTests(unittest.TestCase):
+    """A refused request is not an answer about the profile."""
+
+    def _run(self, status: QueryStatus, http_status):
+        def fake(username, site_data, query_notify, **kwargs):
+            site_data["Slow"]["request_future"] = "the engine leaves its futures here"
+            query_notify.update(QueryResult(username, "Slow", "https://slow/tester",
+                                           status, query_time=0.1))
+            return {"Slow": {"url_main": "https://slow",
+                             "url_user": "https://slow/tester",
+                             "http_status": http_status}}
+
+        plan = {"Slow": {"url": "https://slow/{}"}}
+        with mock.patch("username_probe.probe.probe_usernames", fake):
+            rows, aborted, _elapsed = probe("tester", plan)
+        self.assertFalse(aborted)
+        self.assertEqual(len(rows), 1)
+        return rows[0], plan
+
+    def test_rate_limited_site_is_not_counted_clear(self) -> None:
+        row, _ = self._run(QueryStatus.AVAILABLE, 429)
+        self.assertEqual((row.status, row.verdict), ("blocked", "Rate limited"))
+        self.assertIn("429", row.reason)
+        self.assertEqual(summarize([row])["blocked"], 1)
+
+    def test_rate_limit_cannot_produce_a_false_match(self) -> None:
+        row, _ = self._run(QueryStatus.CLAIMED, 429)
+        self.assertEqual(row.status, "blocked")
+
+    def test_answered_site_keeps_its_own_verdict(self) -> None:
+        row, _ = self._run(QueryStatus.AVAILABLE, 404)
+        self.assertEqual((row.status, row.verdict), ("free", "Available"))
+
+    def test_plan_never_holds_the_previous_runs_futures(self) -> None:
+        _, plan = self._run(QueryStatus.AVAILABLE, 200)
+        self.assertNotIn("request_future", plan["Slow"])
+
+
 class ExportTests(unittest.TestCase):
     rows = [
         SiteRow("GitHub", "found", "Claimed", "https://github.com/tester",
@@ -250,6 +288,20 @@ class ExportTests(unittest.TestCase):
             for path in paths:
                 path.unlink(missing_ok=True)
 
+    def test_windows_reserved_names_stay_writable(self) -> None:
+        from nulltrace.osint_engine import _safe_name
+        for handle, expect in (("CON", "CON_"), ("nul.x", "nul.x_"),
+                               ("com1", "com1_"), ("...", "username"),
+                               ("a b/c", "abc"), ("rate_bose", "rate_bose")):
+            self.assertEqual(_safe_name(handle), expect, handle)
+        self.assertEqual(len(_safe_name("x" * 200)), 60)
+        paths = write_report("CON", self.rows, manifest="t", formats=["txt"])
+        try:
+            self.assertEqual(paths[0].name, "CON_.txt")
+        finally:
+            for path in paths:
+                path.unlink(missing_ok=True)
+
 
 class HtmlReportTests(unittest.TestCase):
     rows = [
@@ -298,6 +350,13 @@ class HtmlReportTests(unittest.TestCase):
         self.assertNotIn("<script>alert(2)</script>", page)
         self.assertIn("&lt;img src=x onerror=alert(1)&gt;", page)
 
+    def test_non_web_address_is_not_turned_into_a_link(self) -> None:
+        sneaky = [SiteRow("Odd", "found", "Claimed", "javascript:alert(1)",
+                          "", "200", "", 1.0)]
+        page = self._html(sneaky)
+        self.assertNotIn("<a href='javascript", page)
+        self.assertIn("javascript:alert(1)", page)
+
     def test_no_match_still_writes_a_page(self) -> None:
         page = self._html([SiteRow("Only", "free", "Available", "", "", "404", "", 0.1)])
         self.assertIn("No site reported a match", page)
@@ -334,6 +393,13 @@ class VendoringTests(unittest.TestCase):
         for name in ("username", "site_data", "query_notify", "proxy", "timeout"):
             self.assertIn(name, parameters)
         self.assertTrue(callable(probe))
+
+    def test_request_pool_is_released_after_every_run(self) -> None:
+        """Upstream abandons 20 worker threads per username; the local patch stays on."""
+        root = Path(__file__).resolve().parents[1]
+        source = (root / "username_probe" / "probe.py").read_text(encoding="utf-8")
+        self.assertIn("_release_probe_sessions(session, underlying_session)", source)
+        self.assertLess(source.index("    finally:"), source.index("return results_total"))
 
     def test_engine_brand_stays_out_of_readable_text(self) -> None:
         """The feature is Username OSINT; the upstream name survives only as a

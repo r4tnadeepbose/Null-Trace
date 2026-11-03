@@ -105,10 +105,16 @@ def _rows_table(rows: Sequence[SiteRow], kind: str) -> str:
         body = []
         for row in rows:
             link = _cell(row.url)
+            # Only a real web address becomes a clickable anchor; anything a
+            # hand-edited manifest put in this column stays plain text.
+            if row.url.startswith(("http://", "https://")):
+                profile = f"<a href='{link}'>{link}</a>"
+            else:
+                profile = link
             body.append(
-                "<tr><td class='site'>{site}</td><td><a href='{link}'>{link}</a></td>"
+                "<tr><td class='site'>{site}</td><td>{profile}</td>"
                 "<td class='num'>{code}</td><td class='num'>{secs}</td></tr>".format(
-                    site=_cell(row.site), link=link,
+                    site=_cell(row.site), profile=profile,
                     code=_cell(row.http_status or "-"),
                     secs="—" if row.seconds is None else f"{row.seconds:.2f}"))
     elif kind == "noise":

@@ -4,10 +4,12 @@ The user-facing feature is called Username OSINT; the engine behind it is the
 ``username_probe/`` package at the repo root (MIT — upstream and licence are
 named in legal/THIRD_PARTY.md), carried with local patches: a packaging-free
 version string, an openpyxl .xlsx writer instead of pandas, the upstream
-promotion footer removed, and the whole package renamed so no third-party brand
-reaches the UI. Everything else — the 480-site manifest, the per-site probe
-methods, soft404 handling, upstream false-positive exclusions and WAF detection
-— is upstream behaviour reached through this module.
+promotion footer removed, a worker-pool release so repeated scans stop piling up
+idle threads, and the whole package renamed so no third-party brand reaches the
+UI. Everything else — the 480-site manifest, its ``errorType`` signatures
+(``message``, ``status_code``, ``response_url``), the upstream false-positive
+exclusions and the WAF fingerprints — is upstream behaviour reached through this
+module.
 """
 
 from __future__ import annotations
@@ -48,7 +50,7 @@ def _engine_hosts() -> tuple[str, ...]:
     return tuple(sorted((host for host in hosts if host), key=len, reverse=True))
 
 
-def _hide_endpoints(text: str) -> str:
+def scrub_endpoints(text: str) -> str:
     """Keep the engine's upstream hosts out of anything a user reads.
 
     A failed fetch quotes the address it could not reach inside its exception —
@@ -140,7 +142,7 @@ def build_plan(*, live: bool = False, manifest_path: str | None = None,
     try:
         sites = _load(source, honor_exclusions)
     except Exception as exc:  # manifest unreachable or malformed
-        plan.manifest_error = _hide_endpoints(str(exc).strip().splitlines()[0][:180])
+        plan.manifest_error = scrub_endpoints(str(exc).strip().splitlines()[0][:180])
         if source == LIVE_MANIFEST:
             # The live manifest needs network; fall back to the bundled copy.
             source = str(BUNDLED_MANIFEST)
@@ -258,6 +260,23 @@ def classify(result) -> SiteRow:
                    reason=reason)
 
 
+_REFUSED = "429"
+
+
+def _relabel_refused(row: SiteRow) -> None:
+    """A rate-limited answer is not a verdict about the profile.
+
+    The upstream status-code test treats anything >= 300 as "not found", so a
+    429 comes back as Available (or Claimed when the site is signature-matched)
+    and would be counted as a clean pass. It is not: the site never answered.
+    """
+    if row.http_status != _REFUSED:
+        return
+    row.status = "blocked"
+    row.verdict = "Rate limited"
+    row.reason = "HTTP 429 — the site refused to answer, so the profile is unknown"
+
+
 def probe(username: str, site_data: dict, *, proxy: str | None = None,
           timeout: float = 15.0, on_result: Callable[[SiteRow], None] | None = None,
           cancel=None, dump_response: bool = False
@@ -272,8 +291,11 @@ def probe(username: str, site_data: dict, *, proxy: str | None = None,
     started = time.monotonic()
     raw: dict | None = None
     aborted = False
+    # The engine parks a live future (and its whole response body) inside every
+    # site entry, so hand it a copy: the next username must not inherit them.
+    plan_data = {site: dict(info) for site, info in site_data.items()}
     try:
-        raw = probe_usernames(username, site_data, collector,
+        raw = probe_usernames(username, plan_data, collector,
                        dump_response=dump_response, proxy=proxy or None,
                        timeout=int(timeout))
     except Cancelled:
@@ -291,6 +313,7 @@ def probe(username: str, site_data: dict, *, proxy: str | None = None,
             row.http_status = str(info.get("http_status") or "")
             if not row.url:
                 row.url = str(info.get("url_user") or "")
+            _relabel_refused(row)
     return list(collector.rows.values()), aborted, elapsed
 
 
@@ -339,9 +362,31 @@ def output_dir() -> Path:
     return path
 
 
+_RESERVED_STEMS = ({"con", "prn", "aux", "nul"}
+                   | {f"com{n}" for n in range(1, 10)}
+                   | {f"lpt{n}" for n in range(1, 10)})
+
+
 def _safe_name(username: str) -> str:
+    """A report filename that Windows will actually accept."""
     keep = [c for c in username if c.isalnum() or c in "._-"]
-    return "".join(keep)[:60] or "username"
+    stem = "".join(keep)[:60].rstrip(". ")
+    if not stem:
+        return "username"
+    if stem.split(".")[0].casefold() in _RESERVED_STEMS:
+        stem += "_"
+    return stem
+
+
+def _xlsx_value(value: str) -> str:
+    """Stop a pasted handle from becoming a live spreadsheet formula."""
+    return "'" + value if value.startswith(("=", "+", "-", "@")) else value
+
+
+def _xlsx_link(url: str) -> str:
+    if not url.startswith(("http://", "https://")):
+        return _xlsx_value(url)
+    return f'=HYPERLINK("{url.replace(chr(34), "")}")'
 
 
 def write_report(username: str, rows: list[SiteRow], *, manifest: str,
@@ -408,8 +453,8 @@ def write_report(username: str, rows: list[SiteRow], *, manifest: str,
         sheet.append(["username", "name", "url_main", "url_user", "exists",
                       "http_status", "response_time_s"])
         for row in ordered:
-            sheet.append([username, row.site, f'=HYPERLINK("{row.url_main}")',
-                          f'=HYPERLINK("{row.url}")', row.verdict,
+            sheet.append([_xlsx_value(username), row.site, _xlsx_link(row.url_main),
+                          _xlsx_link(row.url), row.verdict,
                           row.http_status,
                           "" if row.seconds is None else round(row.seconds, 3)])
         path = folder / f"{stem}.xlsx"

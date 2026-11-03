@@ -13,7 +13,7 @@ from ..job import Field, Module
 from ..net import Cancelled, tor_running
 from ..osint_engine import (SiteRow, build_plan, expand_variants, manifest_version,
                                missing_dependency, output_dir, parse_usernames,
-                               probe, slowest, summarize, write_report)
+                               probe, scrub_endpoints, slowest, summarize, write_report)
 
 MAX_BROWSE = 25
 MAX_AUTO_OPEN = 5
@@ -35,7 +35,7 @@ def _variants(name: str) -> list[str]:
     seen: list[str] = []
     for combo in combos:
         chars = list(name)
-        for pos, char in zip(positions, combo):
+        for pos, char in zip(positions, combo, strict=True):
             chars[pos] = char
         candidate = "".join(chars)
         if candidate != name and candidate not in seen:
@@ -99,7 +99,7 @@ def run(ctx) -> None:
                           include_nsfw=ctx.value("scope").startswith("Everything"),
                           honor_exclusions=ctx.checked("exclusions"))
     except Exception as exc:
-        ctx.error(f"Could not load the site manifest: {exc}")
+        ctx.error(f"Could not load the site manifest: {scrub_endpoints(str(exc))}")
         return
 
     total = len(plan.site_data)
@@ -142,7 +142,9 @@ def run(ctx) -> None:
             ctx.section(f"@{name}")
         counter = {"done": 0}
 
-        def on_result(row: SiteRow) -> None:
+        # name and counter are bound as defaults: the callback must describe the
+        # run that created it, not whatever the loop variable holds later.
+        def on_result(row: SiteRow, *, name: str = name, counter: dict = counter) -> None:
             counter["done"] += 1
             if row.status == "found":
                 ctx.ok(f"FOUND  {row.site}")
@@ -227,8 +229,9 @@ def run(ctx) -> None:
             else:
                 ctx.text(f"saved  {path.name}")
         ctx.muted(f"Folder: {output_dir()}")
-        if ctx.checked("xlsx"):
-            ctx.muted("The .xlsx workbook needs openpyxl, listed in requirements.txt.")
+        if "xlsx" in formats and not any(p.suffix == ".xlsx" for p in written):
+            ctx.warn("No .xlsx written — the workbook needs openpyxl "
+                     "(python -m pip install openpyxl).")
 
     if html_report:
         pages = [p for p in written if p.suffix == ".html"]

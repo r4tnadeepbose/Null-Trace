@@ -137,13 +137,19 @@ the probing logic as one auditable blob means a new release can be dropped in
 without re-reading 900 lines. The cost is that upstream ships under its own name,
 so the package, its entry module and its entry function are renamed here —
 `username_probe/probe.py::probe_usernames()` — and a future drop-in needs the same
-rename replayed. Five local patches are marked in the files: a pinned version
+rename replayed. Six local patches are marked in the files: a pinned version
 string that needs no installed package metadata, an openpyxl `.xlsx` writer
 instead of pandas, the upstream promotion footer removed from the notify path, the
-release check removed from the CLI entry, and the rename itself. The upstream
-project and its licence are named in `legal/THIRD_PARTY.md`, in the bundled
-`username_probe/LICENSE`, and nowhere a user can see them; inside the app the
-feature is only ever "Username OSINT".
+release check removed from the CLI entry, the worker pool shut down when a run
+ends (upstream abandons its 20 request threads per username, so long scans piled
+them up), and the rename itself. The upstream project and its licence are named in
+`legal/THIRD_PARTY.md`, in the bundled `username_probe/LICENSE`, and nowhere a user
+can see them; inside the app the feature is only ever "Username OSINT".
+
+The bridge adds one reading rule of its own: an HTTP 429 is never a verdict about
+the profile. Upstream's status-code signature treats every response above 300 as
+"not found", so a rate-limited site would be counted as a clean miss; the bridge
+looks at the status code it recorded and re-files that site as blocked.
 
 The same rule covers addresses. A plan reports where its sites came back as a
 label — "bundled manifest (data.json)", "live upstream manifest", "your own site
