@@ -40,10 +40,12 @@ Null-Trace applies five local patches, each marked in the code:
 | `__init__.py` | version string is pinned instead of read from installed package metadata (`tomli`) |
 | `probe.py` | the `.xlsx` export writes with `openpyxl` rather than `pandas`, so Null-Trace does not need pandas |
 | `probe.py` | the startup release check is removed — it contacted a third-party repository on every CLI run and printed that project's URL |
+| `probe.py` | the request thread pool is shut down when a run ends; upstream abandons it, which leaked 20 idle threads per username |
 | `notify.py` | the upstream promotional footer is not printed |
 
-Everything else runs as upstream: per-site probe methods, `soft404` handling,
-`errorUrl`/`errorMsg` signatures, WAF detection, the live manifest at
+Everything else runs as upstream: the manifest-driven detection — `errorType`
+signatures (`message`, `status_code`, `response_url`), `regexCheck`, `urlProbe`,
+POST payloads and per-site headers — the WAF fingerprints, the live manifest at
 `data.sherlockproject.xyz`, the false-positive exclusion list at
 `raw.githubusercontent.com/sherlock-project/sherlock` and the CLI, reachable via
 `python scan.py --probe-cli ...`. Those three endpoints are upstream URLs — the
