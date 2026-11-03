@@ -98,6 +98,8 @@ def run(ctx) -> None:
     if unknown:
         ctx.muted(f"Blocked or ambiguous: {', '.join(unknown)}")
     ctx.note("A matched handle is not proof of a shared owner — people reuse names.")
+    ctx.note("Need the whole social-network manifest? Use 'Sherlock Username OSINT' "
+             "— it probes 400+ sites with per-site signatures.")
 
 
 MODULE = Module(
