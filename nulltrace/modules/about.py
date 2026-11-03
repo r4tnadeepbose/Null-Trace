@@ -6,6 +6,15 @@ from ..job import Module
 from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
 
 CHANGELOG = [
+    ("1.4.0", [
+        "Sherlock is inside Null-Trace now: the 0.16.2 engine ships vendored at",
+        "sherlock_project/ (MIT) behind a new 'Sherlock Username OSINT' module.",
+        "Full 480-site manifest with per-site signatures, upstream false-positive",
+        "exclusions, NSFW scope, live or bundled manifest, {?} and separator",
+        "variants, proxy or local Tor, WAF/429 accounting and txt/csv/json/xlsx",
+        "reports. 49 modules now; scan.py --sherlock still gives upstream CLI flags.",
+        "Dependencies: requests-futures, colorama, openpyxl — deliberately no pandas.",
+    ]),
     ("1.3.2", [
         "Output links are clickable again: the line index was off by one, so a",
         "click never found its URL. They now render as a labelled link with the",
