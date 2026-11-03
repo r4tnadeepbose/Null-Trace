@@ -50,7 +50,7 @@ def run(ctx) -> None:
     ctx.section("Snapshots")
     table = []
     for row in body:
-        record = dict(zip(header, row))
+        record = dict(zip(header, row, strict=False))
         stamp = record.get("timestamp", "")
         when = f"{stamp[:4]}-{stamp[4:6]}-{stamp[6:8]}" if len(stamp) >= 8 else stamp
         table.append((when, record.get("statuscode", "—"),
@@ -59,7 +59,7 @@ def run(ctx) -> None:
     ctx.table(("Date", "Status", "Type", "Bytes", "URL"), table)
 
     newest = body[-1]
-    last = dict(zip(header, newest))
+    last = dict(zip(header, newest, strict=False))
     ctx.section("Latest")
     ctx.kv("Captured", last.get("timestamp", "—"))
     ctx.link("Open snapshot", f"https://web.archive.org/web/{last.get('timestamp', '')}/{last.get('original', target)}")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 
-from ..job import Field, Module
+from ..job import Module
 
 
 def _with_timeout(fn, seconds: float, label: str):

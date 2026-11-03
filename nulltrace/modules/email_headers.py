@@ -100,7 +100,6 @@ def run(ctx) -> None:
             if key in seen:
                 continue
             seen.add(key)
-            good = verdict in ("pass", "none")
             fn = ctx.ok if verdict == "pass" else (ctx.muted if verdict == "none" else ctx.warn)
             fn(f"  {mechanism.upper()}: {verdict}")
     else:

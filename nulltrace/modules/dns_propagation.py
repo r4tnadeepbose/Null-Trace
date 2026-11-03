@@ -68,7 +68,7 @@ def run(ctx) -> None:
         ctx.ok("Every resolver agrees — the record is consistent.")
     elif len(distinct) > 1:
         ctx.warn("Resolvers disagree; propagation is still in progress or split-horizon DNS is in use.")
-        for label, server, answers in results:
+        for label, _server, answers in results:
             if answers:
                 ctx.text(f"  {label}: {', '.join(answers[:4])}")
 

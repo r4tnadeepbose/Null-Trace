@@ -64,7 +64,7 @@ def run(ctx) -> None:
 
     ctx.section("Lookup")
     ctx.link("VirusTotal hash search", f"https://www.virustotal.com/gui/search/{raw}")
-    ctx.link("Hashes.com", f"https://hashes.com/en/decrypt/hash")
+    ctx.link("Hashes.com", "https://hashes.com/en/decrypt/hash")
     ctx.note("Submitting a hash to a public cracking site can reveal the original secret; only do it for data you own.")
 
 

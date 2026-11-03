@@ -6,7 +6,7 @@ import smtplib
 import socket
 
 from ..job import Field, Module
-from ..net import EMAIL_RE, HttpError, get_json
+from ..net import HttpError, get_json
 
 
 def _hunter(domain: str, key: str) -> dict | None:

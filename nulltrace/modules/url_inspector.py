@@ -7,7 +7,7 @@ import urllib.parse
 
 from ..datasets import load_lines
 from ..job import Field, Module
-from ..net import HttpError, http, resolve, serve_url, tls_certificate
+from ..net import HttpError, http, resolve, tls_certificate
 
 SHORTENERS = {
     "bit.ly", "tinyurl.com", "t.co", "goo.gl", "ow.ly", "is.gd", "buff.ly", "rebrand.ly",

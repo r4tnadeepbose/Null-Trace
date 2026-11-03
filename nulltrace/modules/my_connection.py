@@ -5,7 +5,7 @@ from __future__ import annotations
 import platform
 import socket
 
-from ..job import Field, Module
+from ..job import Module
 from ..net import HttpError, get_json, reverse_dns
 
 

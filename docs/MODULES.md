@@ -184,9 +184,9 @@ Offline validity, carrier, region and timezone; optional Numverify and IPQS enri
 
 ### Username OSINT (`username_osint`)
 
-The vendored 0.16.2 probing engine, end to end: 418–480 sites from its manifest,
-each checked against its own signature (status codes, expected strings,
-`soft404`, POST payloads and per-site headers). Mirrors the upstream flags —
+The vendored 0.16.2 probing engine, end to end: the manifest's ~480 sites, each
+checked against its own signature (status codes, expected strings, the redirect
+target it should return, POST payloads and per-site headers). Mirrors the upstream flags —
 `--site`, `--nsfw`, `--ignore-exclusions`, `--proxy`, `--timeout`, `--print-all`,
 `--browse`, `{?}` variants, `--json` custom site list and txt/csv/json/xlsx export —
 and adds a "never probe these" filter, local Tor detection and live progress in

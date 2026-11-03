@@ -6,7 +6,6 @@ import gc
 import os
 import platform
 import queue
-import shutil
 import sys
 import time
 import tkinter as tk
@@ -24,7 +23,7 @@ from ..modules.metadata import exiftool_path
 from ..net import tor_path, tor_running
 from ..job import Event, Field, JobRunner, Module
 from ..modules import all_modules, grouped
-from ..version import APP_NAME, AUTHOR, GITHUB, TAGLINE, VERSION
+from ..version import APP_NAME, AUTHOR, GITHUB, VERSION
 
 QUICK_MODULES = ("ip_info", "exposure_audit", "port_scan", "username_scan",
                  "metadata", "cve_research")
@@ -93,7 +92,7 @@ class NullTraceApp(ctk.CTk):
     def _brand_photo(self):
         """Wordmark drawn with a soft red halo, like a tube that never quite focused."""
         try:
-            from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageTk
+            from PIL import Image, ImageDraw, ImageFilter, ImageFont
         except Exception:
             return None
         text = "Null-Trace"
@@ -1575,7 +1574,7 @@ class NullTraceApp(ctk.CTk):
         self._clear_body()
         self._highlight_nav()
         self._grid_rows({0: 0, 1: 0, 2: 1})
-        header = self._page_header("History", "Completed runs are stored locally in sqlite.")
+        self._page_header("History", "Completed runs are stored locally in sqlite.")
 
         bar = ctk.CTkFrame(self.body, fg_color="transparent")
         bar.grid(row=1, column=0, sticky="ew", padx=30, pady=(0, 8))

@@ -7,7 +7,7 @@ import re
 
 from ..datasets import load_lines
 from ..job import Field, Module
-from ..net import EMAIL_RE, HttpError, get_json, http
+from ..net import EMAIL_RE, HttpError, http
 
 _DEFAULT_DISPOSABLE = {
     "mailinator.com", "guerrillamail.com", "10minutemail.com", "tempmail.com",

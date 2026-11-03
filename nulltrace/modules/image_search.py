@@ -13,7 +13,6 @@ from ..net import HttpError, get_json
 def _hashes(path: Path) -> dict | None:
     try:
         from PIL import Image
-        import io
     except ImportError:
         return None
     try:

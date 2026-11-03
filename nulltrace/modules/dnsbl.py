@@ -100,7 +100,7 @@ def run(ctx) -> None:
         ctx.ok("Not listed on any queried blocklist.")
 
     ctx.note("Blocklists flag sending reputation, not intent. Shared IPs can carry another tenant's history.")
-    ctx.link("Spamhaus lookup", f"https://check.spamhaus.org/")
+    ctx.link("Spamhaus lookup", "https://check.spamhaus.org/")
     ctx.link("MXToolbox blacklist", f"https://mxtoolbox.com/SuperTool.aspx?action=blacklist%3a{raw}")
 
 

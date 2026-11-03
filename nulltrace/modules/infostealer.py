@@ -93,8 +93,8 @@ def run(ctx) -> None:
         value = data.get(label) if label in data else None
         if value:
             ctx.text(f"  {label}: {str(value)[:300]}")
-    ctx.link("Check in Cavalier", f"https://cavalier.hudsonrock.com/")
-    ctx.link("HaveIBeenPwned", f"https://haveibeenpwned.com/")
+    ctx.link("Check in Cavalier", "https://cavalier.hudsonrock.com/")
+    ctx.link("HaveIBeenPwned", "https://haveibeenpwned.com/")
 
 
 MODULE = Module(
