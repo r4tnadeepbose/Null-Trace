@@ -128,6 +128,28 @@ A `SubContext` forwards every `ctx` call to the parent while counting rows,
 warnings and errors, so a failing step degrades into a line of output instead of
 aborting the sweep. The run ends with a findings table.
 
+## Vendored engine: Sherlock
+
+`sherlock_project/` at the repository root is Sherlock 0.16.2, kept as a separate
+top-level package rather than rewritten into a Null-Trace module: the manifest and
+its per-site probe signatures are the value, and staying close to upstream means a
+new release can be dropped in without re-auditing 900 lines of probing logic. Two
+patches are marked in the file (a pinned version string and an openpyxl `.xlsx`
+writer instead of pandas). The attribution and the exact patch list live in
+`legal/THIRD_PARTY.md`.
+
+Null-Trace never calls the engine directly from a module. `nulltrace/sherlock_engine.py`
+is the only bridge: it builds the site plan, converts an upstream `QueryResult`
+into a `SiteRow`, and supplies a `QueryNotify` replacement whose `update()` raises
+`Cancelled` when the Stop button is pressed — the engine's result loop does not
+catch exceptions, which makes that the supported abort point. The GUI module
+(`sherlock_scan`) and `scan.py --sherlock` both sit behind the bridge, so the
+exports, statistics and cancel behaviour are identical either way.
+
+The engine's own threads (upstream caps at 20 workers) finish inside the per-request
+timeout, which bounds how long an aborted scan can still linger after the module
+returns.
+
 ## Failure behaviour
 
 Modules are expected to degrade, not crash. A missing key prints what was
@@ -144,6 +166,7 @@ pane with a short traceback, and marked as a failed run in history.
 | `%APPDATA%\Null-Trace\kev.json` | CISA KEV cache (24 h) |
 | `%APPDATA%\Null-Trace\rdap_dns.json` | IANA RDAP bootstrap cache (7 days) |
 | `%APPDATA%\Null-Trace\crash.log` | uncaught exceptions and hard faults, rotated at 1 MB |
+| `%APPDATA%\Null-Trace\sherlock\` | txt, csv, json and xlsx reports from Sherlock Username OSINT |
 
 The folder was renamed from `NullTrace`; on first launch the old directory is
 moved automatically, or reused if a running instance still holds the sqlite file.

@@ -17,6 +17,33 @@ the queries you send them.
 | beautifulsoup4 | MIT | Ahmia result parsing |
 | speedtest-cli | Apache-2.0 | throughput test |
 | PySocks | BSD-3-Clause | Tor SOCKS transport |
+| requests-futures | Apache-2.0 | threaded probes in the Sherlock engine |
+| colorama | MIT | ANSI handling inside the Sherlock engine |
+| openpyxl | MIT | .xlsx report writer |
+
+## Vendored software
+
+### Sherlock 0.16.2 (`sherlock_project/`)
+
+Sherlock — "Hunt down social media accounts by username across social networks" —
+Copyright (c) Siddharth Dushantha and contributors, MIT licensed. The full
+source, including `resources/data.json` (the 480-site manifest) and
+`resources/data.schema.json`, ships unmodified in `sherlock_project/` together
+with its `LICENSE`. Upstream project: <https://sherlockproject.xyz/> /
+<https://github.com/sherlock-project/sherlock>.
+
+Null-Trace applies two local patches, both marked in the code:
+
+| File | Change |
+|---|---|
+| `__init__.py` | version string is pinned instead of read from installed package metadata (`tomli`) |
+| `sherlock.py` | the `.xlsx` export writes with `openpyxl` rather than `pandas`, so Null-Trace does not need pandas |
+
+Everything else runs as upstream: per-site probe methods, `soft404` handling,
+`errorUrl`/`errorMsg` signatures, WAF detection, the live manifest at
+`data.sherlockproject.xyz`, the false-positive exclusion list at
+`raw.githubusercontent.com/sherlock-project/sherlock` and the CLI, reachable via
+`python scan.py --sherlock ...`.
 
 ## Data sources
 
@@ -37,6 +64,8 @@ the queries you send them.
 | GitHub REST API | profile and repository data | 60 req/h unauthenticated |
 | Google News RSS | news search | public feed |
 | Ookla speedtest | network throughput | public endpoints |
+| data.sherlockproject.xyz | live username-probe manifest | only when "Live upstream manifest" is chosen |
+| sherlock-project/sherlock (GitHub raw) | false-positive exclusion list | skipped when exclusions are unticked |
 
 ## Prior art
 

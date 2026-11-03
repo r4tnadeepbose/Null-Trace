@@ -5,7 +5,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-7fa0c4.svg)](https://www.python.org/downloads/)
 
 Open-source intelligence workbench — a desktop application, written in Python, that
-consolidates 48 recon tools into one dark, local-first GUI.
+consolidates 49 recon tools into one dark, local-first GUI.
 
 Everything runs on your machine. Scans go straight from your network to the upstream
 source; nothing is proxied through a Null-Trace server, because there isn't one.
@@ -93,6 +93,8 @@ python scan.py --run ip_info   -a target=1.1.1.1
 python scan.py --run dns_lookup -a domain=example.com -a rtype=MX
 python scan.py --run port_scan  -a host=example.com -a ports=22,80,443 -a timeout=1.5
 python scan.py --run cve_research -a query=CVE-2021-44228
+python scan.py --run sherlock_scan -a usernames=nasa -a only_sites=github,gitlab -a save=1
+python scan.py --sherlock nasa --site github --csv   # upstream Sherlock CLI, vendored
 ```
 
 `-a key=value` maps to the same fields the GUI shows. Checkboxes accept
@@ -135,6 +137,7 @@ python scan.py --run cve_research -a query=CVE-2021-44228
 | Identity | Email Finder | Hunter.io search + pattern candidates + SMTP probes | Hunter |
 | Identity | Exposure Audit | Self-audit: breaches, stealers, mail posture, risk score | HIBP |
 | Identity | Email Headers | Hop chain, SPF/DKIM/DMARC parsing, spoofing verdict | — |
+| Identity | **Sherlock Username OSINT** | The vendored Sherlock 0.16.2 engine: one handle across the full 480-site manifest, per-site signatures, upstream exclusions, NSFW scope, proxy or Tor, txt/csv/json/xlsx | — |
 | Identity | Username Scan | Handle presence across 17 public platforms | — |
 | Identity | Phone Intel | Validity, carrier, region, timezone, fraud score | Numverify/IPQS |
 | Identity | Infostealer Exposure | Hudson Rock Cavalier malware-log lookups | — |
@@ -212,6 +215,7 @@ Null-Trace/
 ├── nulltrace/    application package (gui, modules, transport, storage)
 ├── packaging/    PyInstaller spec and Windows build script
 ├── scripts/      developer checks
+├── sherlock_project/  vendored Sherlock 0.16.2 engine — MIT, see legal/THIRD_PARTY.md
 ├── tests/        offline unit tests
 ├── scan.py       entry point (GUI and headless)
 ├── LICENSE       MIT

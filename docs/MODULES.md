@@ -1,6 +1,6 @@
 # Module reference
 
-Generated from `nulltrace/modules/__init__.py` — 48 modules.
+Generated from `nulltrace/modules/__init__.py` — 49 modules.
 
 | Module | ID | Category | Inputs | API key |
 |---|---|---|---|---|
@@ -35,6 +35,7 @@ Generated from `nulltrace/modules/__init__.py` — 48 modules.
 | **Email Finder** | `email_finder` | Identity | domain*, first, last, smtp (checkbox) | hunter |
 | **Exposure Audit** | `exposure_audit` | Identity | email, phone, name, breach (checkbox), stealer (checkbox), dns (checkbox), footprint (checkbox) | hibp |
 | **Phone Intel** | `phone_info` | Identity | number*, region | numverify, ipqualityscore |
+| **Sherlock Username OSINT** | `sherlock_scan` | Identity | usernames* (multiline), scope (choice), manifest (choice), custom_manifest, only_sites, skip_sites, timeout, proxy, exclusions (checkbox), variants (checkbox), tor (checkbox), print_all (checkbox), browse (checkbox), save (checkbox), xlsx (checkbox) | — |
 | **Username Scan** | `username_scan` | Identity | username*, scope (choice) | — |
 | **Email Headers** | `email_headers` | Identity | raw* (multiline), geo (checkbox) | — |
 | **SMTP Analysis** | `smtp` | Identity | domain*, recipient, starttls (checkbox) | — |
@@ -180,6 +181,21 @@ Self-audit: breaches, stealer logs, mail posture and public footprint in one sco
 ### Phone Intel (`phone_info`)
 
 Offline validity, carrier, region and timezone; optional Numverify and IPQS enrichment.
+
+### Sherlock Username OSINT (`sherlock_scan`)
+
+The vendored Sherlock 0.16.2 engine, end to end: 418–480 sites from the upstream
+manifest, probed with each site's own signature (status codes, expected strings,
+`soft404`, POST payloads and per-site headers). Mirrors the upstream flags —
+`--site`, `--nsfw`, `--ignore-exclusions`, `--proxy`, `--timeout`, `--print-all`,
+`--browse`, `{?}` variants, `--json` custom site list and txt/csv/json/xlsx export —
+and adds a "never probe these" filter, local Tor detection and live progress in
+the GUI.
+
+Results are grouped as matched, clear, and inconclusive (WAF, 429, connection
+error, site-rule rejection) instead of hiding the noisy ones. Reports land in
+`%APPDATA%/Null-Trace/sherlock/`. The full upstream CLI is also reachable with
+`python scan.py --sherlock user123 --site github --csv`.
 
 ### Username Scan (`username_scan`)
 
