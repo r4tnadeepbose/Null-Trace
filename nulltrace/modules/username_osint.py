@@ -1,9 +1,7 @@
-"""Sherlock username OSINT — the full upstream engine, inside Null-Trace.
+"""Username OSINT — one handle, the whole public-profile manifest.
 
-Wraps the vendored ``sherlock_project`` package (MIT, Siddharth Dushantha and
-contributors) so the whole 480-site manifest, its per-site probe methods,
-false-positive exclusions and NSFW scope are reachable from the GUI and the
-headless CLI without leaving this workbench.
+Thin GUI layer over `nulltrace/osint_engine.py`, which drives the vendored
+open-source probe engine (MIT — attribution in legal/THIRD_PARTY.md).
 """
 
 from __future__ import annotations
@@ -13,11 +11,12 @@ import itertools
 from ..browser import open_url
 from ..job import Field, Module
 from ..net import Cancelled, tor_running
-from ..sherlock_engine import (SiteRow, build_plan, engine_version, expand_variants,
+from ..osint_engine import (SiteRow, build_plan, expand_variants, manifest_version,
                                missing_dependency, output_dir, parse_usernames,
                                probe, slowest, summarize, write_report)
 
 MAX_BROWSE = 25
+MAX_AUTO_OPEN = 5
 
 
 def _variants(name: str) -> list[str]:
@@ -52,18 +51,19 @@ def run(ctx) -> None:
 
     gap = missing_dependency()
     if gap:
-        ctx.error(f"The vendored engine needs the '{gap}' package.")
+        ctx.error(f"The probe engine needs the '{gap}' package.")
         ctx.muted("Install dependencies with:  python -m pip install -r requirements.txt")
         return
 
     expanded: list[str] = []
     for name in names:
-        variants: list[str] = []
         if "{?}" in name:
             variants = expand_variants(name)
         elif ctx.checked("variants"):
             variants = _variants(name)
-        for candidate in [name, *variants] if variants else [name]:
+        else:
+            variants = []
+        for candidate in [name, *variants]:
             if candidate not in expanded:
                 expanded.append(candidate)
     names = expanded
@@ -83,7 +83,14 @@ def run(ctx) -> None:
         else:
             ctx.warn("Nothing is listening on 127.0.0.1:9050 — scanning directly.")
 
-    ctx.title(f"Sherlock username OSINT — {len(names)} name(s)")
+    html_report = ctx.checked("html")
+    want_list = ctx.checked("list_sites")
+    print_all = ctx.checked("print_all")
+    # The HTML page carries the tables, so the pane stays short unless the user
+    # asked for the long listing or turned the report off.
+    pane_full = (not html_report) or print_all or want_list
+
+    ctx.title(f"Username OSINT — {len(names)} name(s)")
     try:
         plan = build_plan(live=ctx.value("manifest").startswith("Live"),
                           manifest_path=ctx.value("custom_manifest") or None,
@@ -101,30 +108,32 @@ def run(ctx) -> None:
         return
 
     everything = ctx.value("scope").startswith("Everything")
-    ctx.kv("Engine", f"Sherlock {engine_version()} (vendored, MIT)")
+    ctx.kv("Sites per name", f"{total} (manifest {manifest_version()})")
     ctx.kv("Manifest", plan.manifest)
-    ctx.kv("Sites per name", total)
     ctx.kv("Scope", "including NSFW" if everything else "safe sites only")
-    ctx.kv("Upstream exclusions", "honored" if plan.honor_exclusions else "ignored")
+    ctx.kv("False-positive exclusions", "honored" if plan.honor_exclusions else "ignored")
     ctx.kv("Timeout per request", f"{timeout_seconds:.0f}s")
     ctx.kv("Proxy", proxy or "direct connection")
-    ctx.muted(f"{plan.nsfw_total} NSFW sites sit in the manifest; "
-              f"{'probed' if everything else 'skipped this run'}.")
+    ctx.kv("Output", "HTML report (opened at the end)" if html_report
+           else "this pane only")
+    if pane_full:
+        ctx.muted(f"{plan.nsfw_total} NSFW sites sit in the manifest; "
+                  f"{'probed' if everything else 'skipped this run'}.")
     if plan.manifest_error:
         ctx.warn(f"Manifest note: {plan.manifest_error}")
     if plan.unknown_sites:
         ctx.warn("Site names not in the manifest: " + ", ".join(plan.unknown_sites))
-        ctx.muted("A withheld upstream site counts as unknown here — untick the "
-                  "exclusion filter if you still want it probed.")
+        ctx.muted("A withheld site counts as unknown here — untick the exclusion "
+                  "filter if you still want it probed.")
 
-    print_all = ctx.checked("print_all")
-    if ctx.checked("list_sites"):
+    if want_list:
         ctx.section(f"Manifest sites ({total})")
         ctx.table(("Site", "Probe", "NSFW"),
                   ((name, str(info.get("method", "get")).upper(),
                     "yes" if info.get("isNSFW") else "-")
                    for name, info in sorted(plan.site_data.items(),
                                             key=lambda item: item[0].casefold())))
+
     collected: dict[str, list[SiteRow]] = {}
     aborted = False
 
@@ -138,7 +147,7 @@ def run(ctx) -> None:
             if row.status == "found":
                 ctx.ok(f"FOUND  {row.site}")
                 ctx.link(f"  {row.site}", row.url)
-            elif print_all and row.status != "error":
+            elif pane_full and print_all and row.status != "error":
                 ctx.muted(f"  {row.site}: {row.verdict}")
             if counter["done"] % 40 == 0:
                 ctx.status(f"@{name}: {counter['done']}/{total} answered")
@@ -160,26 +169,26 @@ def run(ctx) -> None:
         found = [r for r in rows if r.status == "found" and r.url]
         noise = [r for r in rows if r.status in ("blocked", "error", "illegal")]
 
-        ctx.section(f"Matched profiles — @{name}")
-        if found:
+        ctx.section(f"Matched — @{name} ({len(found)})")
+        if not found:
+            ctx.muted("  (no site reported a match)")
+        elif pane_full:
             ctx.table(("Site", "URL", "HTTP", "Seconds"),
                       ((r.site, r.url, r.http_status or "-",
                         f"{r.seconds:.2f}" if r.seconds else "-") for r in found))
-            if ctx.checked("browse"):
-                for row in found[:MAX_BROWSE]:
-                    open_url(row.url)
-                if len(found) > MAX_BROWSE:
-                    ctx.muted(f"Opened {MAX_BROWSE} links; the rest stay in the table.")
-        else:
-            ctx.muted("  (no site reported a match)")
+        if ctx.checked("browse"):
+            for row in found[:MAX_BROWSE]:
+                open_url(row.url)
+            if len(found) > MAX_BROWSE:
+                ctx.muted(f"Opened {MAX_BROWSE} links; the rest stay in the listing.")
 
-        if print_all:
+        if pane_full and print_all:
             ctx.section(f"No profile — @{name}")
             ctx.table(("Site", "Verdict", "HTTP"),
                       ((r.site, r.verdict, r.http_status or "-")
                        for r in rows if r.status == "free"))
 
-        if noise:
+        if pane_full and noise:
             ctx.section(f"Inconclusive — @{name}")
             ctx.table(("Site", "Verdict", "Why"),
                       ((r.site, r.verdict, (r.reason or "-")[:70]) for r in noise))
@@ -192,70 +201,93 @@ def run(ctx) -> None:
         ctx.kv("Errors", counts.get("error", 0))
         ctx.kv("Rejected by site rules", counts.get("illegal", 0))
         ctx.kv("Wall-clock time", f"{elapsed:.1f}s")
-        slow = slowest(rows, 3)
-        if slow:
-            ctx.muted("Slowest: " + ", ".join(
-                f"{r.site} {r.seconds:.1f}s" for r in slow if r.seconds))
+        if pane_full:
+            slow = slowest(rows, 3)
+            if slow:
+                ctx.muted("Slowest: " + ", ".join(
+                    f"{r.site} {r.seconds:.1f}s" for r in slow if r.seconds))
 
+    written: list = []
+    formats: list[str] = []
+    if html_report:
+        formats.append("html")
     if ctx.checked("save"):
-        formats = ["txt", "csv", "json"] + (["xlsx"] if ctx.checked("xlsx") else [])
-        ctx.section("Saved reports")
+        formats += ["txt", "csv", "json"] + (["xlsx"] if ctx.checked("xlsx") else [])
+    if formats:
+        ctx.section("Reports")
         try:
             for name, rows in collected.items():
-                for path in write_report(name, rows, manifest=plan.manifest,
-                                        formats=formats):
-                    ctx.link(f"  {path.name}", str(path))
+                written.extend(write_report(name, rows, manifest=plan.manifest,
+                                            formats=formats))
         except Exception as exc:
             ctx.warn(f"Report writing failed: {exc}")
+        for path in written:
+            if path.suffix == ".html" or not html_report:
+                ctx.ok(f"saved  {path.name}")
+            else:
+                ctx.text(f"saved  {path.name}")
         ctx.muted(f"Folder: {output_dir()}")
         if ctx.checked("xlsx"):
             ctx.muted("The .xlsx workbook needs openpyxl, listed in requirements.txt.")
 
+    if html_report:
+        pages = [p for p in written if p.suffix == ".html"]
+        for page in pages[:MAX_AUTO_OPEN]:
+            open_url(page.as_uri())
+        if len(pages) > MAX_AUTO_OPEN:
+            ctx.muted(f"Opened {MAX_AUTO_OPEN} reports; {len(pages) - MAX_AUTO_OPEN} "
+                      "more are in the folder.")
+        ctx.note("Full tables, every verdict and the reason for each inconclusive "
+                 "answer are on that page. Untick 'Open the HTML report' to print "
+                 "everything in this pane instead.")
+
     ctx.section("How to read this")
     ctx.note(
-        "Sherlock compares each reply against that site's own 'profile missing' "
-        "signature, so a match is a strong hint rather than proof: people reuse "
-        "handles, and some sites answer 200 for everyone. Anything inconclusive is "
-        "counted separately instead of being hidden. Only public profile pages are "
-        "requested, one pass per site."
+        "Each site is compared against its own 'profile missing' signature, so a "
+        "match is a strong hint rather than proof: people reuse handles, and some "
+        "sites answer 200 for everyone. Inconclusive answers are counted instead of "
+        "hidden. Only public profile pages are requested, one pass per site."
     )
-    ctx.note("Engine: Sherlock " + engine_version() + ", MIT licensed — "
-             "sherlockproject.xyz, notice in legal/THIRD_PARTY.md.")
+    ctx.note("Probe signatures: vendored open-source engine, MIT licensed — "
+             "notice in legal/THIRD_PARTY.md.")
 
     if aborted:
         raise Cancelled()
 
 
 MODULE = Module(
-    id="sherlock_scan",
-    title="Sherlock Username OSINT",
+    id="username_osint",
+    title="Username OSINT",
     category="Identity",
-    summary="The whole vendored Sherlock engine: one handle against the full "
-            "480-site manifest, with exclusions, NSFW scope, proxy or Tor, and "
-            "txt, csv, json, xlsx reports.",
+    summary="One handle against the full 480-site public-profile manifest: "
+            "per-site signatures, exclusions, NSFW scope, proxy or Tor, and an "
+            "HTML report that opens itself when the scan ends.",
     order=64,
     fields=(
         Field("usernames", "Usernames", kind="multiline", required=True,
               placeholder="r4tnadeepbose\nrate_bose\nuser{?}name",
               help="One per line, or separated by spaces and commas. "
-                   "{?} becomes _ , - and . as upstream does."),
+                   "{?} becomes _ , - and ."),
         Field("scope", "Site scope", kind="choice",
               choices=("Safe sites only (recommended)", "Everything, including NSFW"),
               default="Safe sites only (recommended)"),
         Field("manifest", "Site manifest", kind="choice",
-              choices=("Bundled data.json (offline-safe)",
+              choices=("Bundled manifest (offline-safe)",
                        "Live upstream manifest (freshest)"),
-              default="Bundled data.json (offline-safe)"),
+              default="Bundled manifest (offline-safe)"),
         Field("custom_manifest", "Custom site list",
               placeholder=r"C:\Lists\my_sites.json  or  https://example.com/data.json",
-              help="Optional, must end in .json — overrides the choice above "
-                   "(upstream --json)."),
+              help="Optional, must end in .json — overrides the choice above."),
         Field("only_sites", "Only these sites", placeholder="github, twitter, tiktok",
-              help="Leave empty to probe the entire manifest (upstream --site)."),
+              help="Leave empty to probe the entire manifest."),
         Field("skip_sites", "Never probe these", placeholder="Instagram, Vsco"),
         Field("timeout", "Timeout per request", default="15",
               help="Seconds, 2-120. Raise it on a routed or slow connection."),
         Field("proxy", "Proxy URL", placeholder="socks5h://127.0.0.1:9050"),
+        Field("html", "Open the HTML report when the scan ends",
+              kind="checkbox", default="True",
+              help="Ticked: results go to a page in your browser and this pane "
+                   "stays short. Unticked: everything prints here."),
         Field("exclusions", "Honor upstream false-positive exclusions",
               kind="checkbox", default="True"),
         Field("variants", "Also try . - _ separator variants", kind="checkbox"),
@@ -263,7 +295,7 @@ MODULE = Module(
         Field("print_all", "List every site checked", kind="checkbox"),
         Field("list_sites", "Print the site list before scanning", kind="checkbox"),
         Field("browse", "Open matched profiles in the browser", kind="checkbox"),
-        Field("save", "Save txt + csv + json report", kind="checkbox"),
+        Field("save", "Also save txt + csv + json", kind="checkbox"),
         Field("xlsx", "Also save an .xlsx workbook", kind="checkbox"),
     ),
     run=run,

@@ -1,10 +1,12 @@
-"""Bridge between Null-Trace and the vendored Sherlock engine.
+"""Bridge between Null-Trace and the vendored username-probe engine.
 
-`sherlock_project/` (repo root) is an unmodified copy of Sherlock 0.16.2 except
-for two Null-Trace patches: a packaging-free version string and an openpyxl
-.xlsx writer instead of pandas. Everything else — the 480-site manifest, the
-per-site probe logic, soft404 handling, upstream false-positive exclusions,
-WAF detection — is upstream behaviour reached through this module.
+The user-facing feature is called Username OSINT; the engine behind it is the
+``sherlock_project/`` package at the repo root (MIT, Sherlock 0.16.2, see
+legal/THIRD_PARTY.md), kept as upstream code with two local patches: a
+packaging-free version string and an openpyxl .xlsx writer instead of pandas.
+Everything else — the 480-site manifest, the per-site probe methods, soft404
+handling, upstream false-positive exclusions and WAF detection — is upstream
+behaviour reached through this module.
 """
 
 from __future__ import annotations
@@ -50,7 +52,8 @@ def _ready() -> None:
         raise EngineError(f"Vendored Sherlock engine is missing or broken: {exc}") from exc
 
 
-def engine_version() -> str:
+def manifest_version() -> str:
+    """Version of the vendored probe engine, which the manifest ships with."""
     _ready()
     from sherlock_project import __version__
     return __version__
@@ -302,7 +305,7 @@ def slowest(rows: Iterable[SiteRow], limit: int = 5) -> list[SiteRow]:
 # ---------------------------------------------------------------- output -----
 
 def output_dir() -> Path:
-    path = data_dir() / "sherlock"
+    path = data_dir() / "username-osint"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -313,7 +316,7 @@ def _safe_name(username: str) -> str:
 
 
 def write_report(username: str, rows: list[SiteRow], *, manifest: str,
-                 formats: Iterable[str] = ("txt", "csv", "json")) -> list[Path]:
+                 formats: Iterable[str] = ("html", "txt", "csv", "json")) -> list[Path]:
     """Write the per-username report files and return their paths."""
     wanted = {f.lower().lstrip(".") for f in formats}
     folder = output_dir()
@@ -322,7 +325,7 @@ def write_report(username: str, rows: list[SiteRow], *, manifest: str,
     ordered = sorted(rows, key=lambda r: r.site.casefold())
 
     if "txt" in wanted:
-        lines = [f"# Null-Trace / Sherlock report — @{username}",
+        lines = [f"# Null-Trace · Username OSINT — @{username}",
                  f"# manifest: {manifest}",
                  f"# generated: {time.strftime('%Y-%m-%d %H:%M:%S')}", ""]
         for row in ordered:
@@ -351,11 +354,18 @@ def write_report(username: str, rows: list[SiteRow], *, manifest: str,
         payload = {
             "username": username,
             "manifest": manifest,
-            "engine": _version_or_none(),
+            "manifest_version": _version_or_none(),
             "generated": time.strftime("%Y-%m-%dT%H:%M:%S"),
             "results": [asdict(row) for row in ordered],
         }
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        written.append(path)
+
+    if "html" in wanted:
+        from .report_html import render
+
+        path = folder / f"{stem}.html"
+        path.write_text(render(username, ordered, manifest=manifest), encoding="utf-8")
         written.append(path)
 
     if "xlsx" in wanted:
@@ -382,6 +392,6 @@ def write_report(username: str, rows: list[SiteRow], *, manifest: str,
 
 def _version_or_none() -> str:
     try:
-        return engine_version()
+        return manifest_version()
     except EngineError:
         return "unavailable"

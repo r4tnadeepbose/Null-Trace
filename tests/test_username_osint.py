@@ -1,4 +1,4 @@
-"""Vendored Sherlock engine: manifest, classification, exports and cancel path.
+"""Username OSINT engine: manifest, classification, exports and cancel path.
 
 Nothing here touches the network — the bundled manifest is used everywhere and
 upstream exclusion fetching is switched off.
@@ -16,8 +16,8 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from nulltrace.net import Cancelled
-from nulltrace.sherlock_engine import (BUNDLED_MANIFEST, SiteRow, build_plan,
-                                        classify, engine_version, expand_variants,
+from nulltrace.osint_engine import (BUNDLED_MANIFEST, SiteRow, build_plan,
+                                        classify, manifest_version, expand_variants,
                                         missing_dependency, output_dir,
                                         parse_usernames, probe, site_names,
                                         slowest, summarize, write_report)
@@ -38,7 +38,7 @@ class ManifestTests(unittest.TestCase):
         self.assertGreaterEqual(len(data), 400)
 
     def test_engine_reports_version_without_pip(self) -> None:
-        self.assertEqual(engine_version(), "0.16.2")
+        self.assertEqual(manifest_version(), "0.16.2")
 
     def test_dependencies_installed(self) -> None:
         self.assertIsNone(missing_dependency())
@@ -83,7 +83,7 @@ class ManifestTests(unittest.TestCase):
 
     def test_live_manifest_falls_back_when_unreachable(self) -> None:
         dead = "http://127.0.0.1:9/manifest.json"
-        with mock.patch("nulltrace.sherlock_engine.LIVE_MANIFEST", dead):
+        with mock.patch("nulltrace.osint_engine.LIVE_MANIFEST", dead):
             plan = build_plan(live=True, honor_exclusions=False, only=["GitHub"])
         self.assertTrue(plan.manifest_error, plan.manifest_error)
         self.assertEqual(plan.manifest, str(BUNDLED_MANIFEST))
@@ -132,7 +132,7 @@ class UsernameTests(unittest.TestCase):
         self.assertEqual(expand_variants("plain"), ["plain"])
 
     def test_separator_variants(self) -> None:
-        from nulltrace.modules.sherlock_scan import _variants
+        from nulltrace.modules.username_osint import _variants
         self.assertEqual(_variants("noplaces"), [])
         self.assertEqual(set(_variants("a.b")), {"a-b", "a_b"})
         many = _variants("a.b.c.d")
@@ -143,7 +143,7 @@ class UsernameTests(unittest.TestCase):
 
 class CancelTests(unittest.TestCase):
     def test_collector_raises_when_cancel_is_set(self) -> None:
-        from nulltrace.sherlock_engine import _make_collector
+        from nulltrace.osint_engine import _make_collector
         cancel = threading.Event()
         cancel.set()
         collector = _make_collector(None, cancel)
@@ -151,7 +151,7 @@ class CancelTests(unittest.TestCase):
             collector.update(_result("x", QueryStatus.CLAIMED))
 
     def test_collector_collects_and_reports(self) -> None:
-        from nulltrace.sherlock_engine import _make_collector
+        from nulltrace.osint_engine import _make_collector
         seen: list[SiteRow] = []
         collector = _make_collector(seen.append, threading.Event())
         collector.start("tester")
@@ -200,7 +200,7 @@ class ExportTests(unittest.TestCase):
         path = next(p for p in self.paths if p.suffix == ".json")
         payload = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(payload["username"], self.username)
-        self.assertEqual(payload["engine"], "0.16.2")
+        self.assertEqual(payload["manifest_version"], "0.16.2")
         self.assertEqual(len(payload["results"]), 2)
         self.assertEqual(payload["results"][0]["url"], "https://github.com/tester")
 
@@ -224,6 +224,58 @@ class ExportTests(unittest.TestCase):
                 path.unlink(missing_ok=True)
 
 
+class HtmlReportTests(unittest.TestCase):
+    rows = [
+        SiteRow("GitHub", "found", "Claimed", "https://github.com/tester?a=1&b=2",
+                "https://github.com", "200", "", 0.42),
+        SiteRow("Some Blog", "free", "Available", "https://blog/tester",
+                "https://blog", "404", "", 0.2),
+        SiteRow("Guarded", "blocked", "WAF", "https://guarded/tester", "https://guarded",
+                "403", "Web application firewall", 0.9),
+    ]
+
+    def _html(self, rows=None, username="tester") -> str:
+        paths = write_report(username, rows or self.rows, manifest="bundled",
+                             formats=["html"])
+        try:
+            return paths[0].read_text(encoding="utf-8")
+        finally:
+            for path in paths:
+                path.unlink(missing_ok=True)
+
+    def test_page_is_written_and_self_contained(self) -> None:
+        page = self._html()
+        self.assertTrue(page.startswith("<!DOCTYPE html"))
+        self.assertIn("Username OSINT — @tester", page)
+        self.assertIn("<style>", page)
+        self.assertNotIn("<link ", page)
+        self.assertNotIn("<script src", page)
+        self.assertIn("MATCHED PROFILES", page)
+        self.assertIn("INCONCLUSIVE", page)
+        self.assertIn("NO PROFILE", page)
+
+    def test_links_and_counts_render(self) -> None:
+        page = self._html()
+        self.assertIn("href='https://github.com/tester?a=1&amp;b=2'", page)
+        self.assertIn("sites probed <b>3</b>", page)
+        self.assertIn("matched <b>1</b>", page)
+        self.assertIn("Web application firewall", page)
+        self.assertIn("<details>", page)          # the long "no profile" list folds
+        self.assertIn("legal/THIRD_PARTY.md", page)
+
+    def test_hostile_input_is_escaped(self) -> None:
+        hostile = [SiteRow("<img src=x onerror=alert(1)>", "found", "Claimed",
+                           "https://x/<script>alert(2)</script>", "", "200", "", 1.0)]
+        page = self._html(hostile, username="a<b>c")
+        self.assertNotIn("<img src=x", page)
+        self.assertNotIn("<script>alert(2)</script>", page)
+        self.assertIn("&lt;img src=x onerror=alert(1)&gt;", page)
+
+    def test_no_match_still_writes_a_page(self) -> None:
+        page = self._html([SiteRow("Only", "free", "Available", "", "", "404", "", 0.1)])
+        self.assertIn("No site reported a match", page)
+
+
 class VendoringTests(unittest.TestCase):
     def test_pandas_is_not_imported_at_module_level(self) -> None:
         root = Path(__file__).resolve().parents[1]
@@ -239,11 +291,13 @@ class VendoringTests(unittest.TestCase):
 
     def test_module_registered(self) -> None:
         from nulltrace.modules import find
-        module = find("sherlock_scan")
+        module = find("username_osint")
         self.assertIsNotNone(module)
+        self.assertEqual(module.title, "Username OSINT")
         self.assertEqual(module.category, "Identity")
         names = [field.name for field in module.fields]
-        for required in ("usernames", "scope", "manifest", "save", "exclusions"):
+        for required in ("usernames", "scope", "manifest", "save", "exclusions",
+                       "html"):
             self.assertIn(required, names)
 
     def test_probe_signature_survives_upstream(self) -> None:

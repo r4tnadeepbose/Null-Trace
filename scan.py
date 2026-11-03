@@ -4,10 +4,10 @@
     python scan.py                     launch the desktop application
     python scan.py --list              list every module
     python scan.py --run ip_info -a target=1.1.1.1    run one module headlessly
-    python scan.py --sherlock user123 --csv           upstream Sherlock CLI, vendored
+    python scan.py --probe-cli user123 --csv          vendored probe engine CLI
 
-The vendored Sherlock engine keeps its own flag set: everything after
---sherlock is handed to sherlock_project.sherlock:main.
+The username-probe engine keeps its own flag set: everything after
+--probe-cli is handed to the vendored CLI unchanged.
 """
 
 from __future__ import annotations
@@ -115,16 +115,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run", metavar="MODULE", help="run a module without the GUI")
     parser.add_argument("-a", "--arg", action="append", default=[], metavar="KEY=VALUE",
                         help="input for --run, repeatable")
-    parser.add_argument("--sherlock", action="store_true",
-                        help="run the vendored upstream Sherlock CLI; its own flags follow")
+    parser.add_argument("--probe-cli", action="store_true",
+                        help="run the vendored username-probe CLI; its own flags follow")
     parser.add_argument("--version", action="store_true", help="print version")
     args, extra = parser.parse_known_args(argv)
 
-    if args.sherlock:
+    if args.probe_cli:
         _bootstrap()
-        sys.argv = ["sherlock", *extra]
-        from sherlock_project.sherlock import main as sherlock_main
-        sherlock_main()
+        sys.argv = ["probe", *extra]
+        from sherlock_project.sherlock import main as probe_main
+        probe_main()
         return 0
 
     if args.version:
