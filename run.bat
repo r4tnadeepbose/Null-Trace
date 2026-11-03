@@ -5,10 +5,13 @@ cd /d "%~dp0"
 if not exist ".venv\Scripts\python.exe" (
     echo [Null-Trace] Creating virtual environment ...
     python -m venv .venv || goto :fail
-    echo [Null-Trace] Installing dependencies ...
     ".venv\Scripts\python.exe" -m pip install --upgrade pip >nul
-    ".venv\Scripts\python.exe" -m pip install -r requirements.txt || goto :fail
 )
+
+echo [Null-Trace] Checking dependencies ...
+rem Run on every start: a venv from an older release is missing packages this
+rem version added. Already-satisfied requirements are a local no-op.
+".venv\Scripts\python.exe" -m pip install -r requirements.txt || goto :fail
 
 ".venv\Scripts\python.exe" scan.py %*
 if errorlevel 1 pause

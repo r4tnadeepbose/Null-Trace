@@ -1,4 +1,8 @@
 requests
+requests[socks]
+requests-futures
+colorama
+openpyxl
 dnspython
 customtkinter
 Pillow
@@ -7,4 +11,3 @@ piexif
 qrcode
 beautifulsoup4
 speedtest-cli
-requests[socks]
