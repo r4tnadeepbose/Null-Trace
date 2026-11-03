@@ -35,7 +35,7 @@ Generated from `nulltrace/modules/__init__.py` — 49 modules.
 | **Email Finder** | `email_finder` | Identity | domain*, first, last, smtp (checkbox) | hunter |
 | **Exposure Audit** | `exposure_audit` | Identity | email, phone, name, breach (checkbox), stealer (checkbox), dns (checkbox), footprint (checkbox) | hibp |
 | **Phone Intel** | `phone_info` | Identity | number*, region | numverify, ipqualityscore |
-| **Sherlock Username OSINT** | `sherlock_scan` | Identity | usernames* (multiline), scope (choice), manifest (choice), custom_manifest, only_sites, skip_sites, timeout, proxy, exclusions (checkbox), variants (checkbox), tor (checkbox), print_all (checkbox), browse (checkbox), save (checkbox), xlsx (checkbox) | — |
+| **Sherlock Username OSINT** | `sherlock_scan` | Identity | usernames* (multiline), scope (choice), manifest (choice), custom_manifest, only_sites, skip_sites, timeout, proxy, exclusions (checkbox), variants (checkbox), tor (checkbox), print_all (checkbox), list_sites (checkbox), browse (checkbox), save (checkbox), xlsx (checkbox) | — |
 | **Username Scan** | `username_scan` | Identity | username*, scope (choice) | — |
 | **Email Headers** | `email_headers` | Identity | raw* (multiline), geo (checkbox) | — |
 | **SMTP Analysis** | `smtp` | Identity | domain*, recipient, starttls (checkbox) | — |

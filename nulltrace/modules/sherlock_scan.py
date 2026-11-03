@@ -118,6 +118,13 @@ def run(ctx) -> None:
                   "exclusion filter if you still want it probed.")
 
     print_all = ctx.checked("print_all")
+    if ctx.checked("list_sites"):
+        ctx.section(f"Manifest sites ({total})")
+        ctx.table(("Site", "Probe", "NSFW"),
+                  ((name, str(info.get("method", "get")).upper(),
+                    "yes" if info.get("isNSFW") else "-")
+                   for name, info in sorted(plan.site_data.items(),
+                                            key=lambda item: item[0].casefold())))
     collected: dict[str, list[SiteRow]] = {}
     aborted = False
 
@@ -254,6 +261,7 @@ MODULE = Module(
         Field("variants", "Also try . - _ separator variants", kind="checkbox"),
         Field("tor", "Route through Tor when it is listening", kind="checkbox"),
         Field("print_all", "List every site checked", kind="checkbox"),
+        Field("list_sites", "Print the site list before scanning", kind="checkbox"),
         Field("browse", "Open matched profiles in the browser", kind="checkbox"),
         Field("save", "Save txt + csv + json report", kind="checkbox"),
         Field("xlsx", "Also save an .xlsx workbook", kind="checkbox"),
