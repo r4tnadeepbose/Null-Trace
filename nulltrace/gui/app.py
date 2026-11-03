@@ -853,14 +853,39 @@ class NullTraceApp(ctk.CTk):
                           font=theme.font(10), command=command
                           ).pack(side="left", padx=(6, 0))
 
+        # Same surface as the card: the output should not read as a second
+        # framed box inside the panel.
         self.output = ctk.CTkTextbox(
-            card, fg_color=theme.OUTPUT_BG, text_color=theme.OUTPUT_TEXT,
-            font=ctk.CTkFont(*theme.OUTPUT_FONT), corner_radius=theme.RADIUS, wrap="word",
+            card, fg_color=theme.PANEL, text_color=theme.OUTPUT_TEXT,
+            font=ctk.CTkFont(*theme.OUTPUT_FONT), corner_radius=0, wrap="word",
             border_width=0, scrollbar_button_color=theme.ELEV,
             scrollbar_button_hover_color=theme.BORDER)
-        self.output.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        self.output.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 10))
         self._attach_tags(self.output)
+        self._bind_wheel_scroll(self.output)
         self.output.configure(state="disabled")
+
+    def _bind_wheel_scroll(self, textbox) -> None:
+        """Scroll the output with the wheel — CTkTextbox only drags its bar."""
+        raw = getattr(textbox, "_textbox", textbox)
+
+        def scroll(event) -> str:
+            number = getattr(event, "num", 0)
+            if number == 4:                      # X11 wheel up
+                lines = -3
+            elif number == 5:                    # X11 wheel down
+                lines = 3
+            else:                                # Windows and macOS: event.delta
+                direction = -1 if event.delta > 0 else 1
+                notches = max(1, round(abs(event.delta) / 120))
+                lines = direction * notches
+            raw.yview_scroll(lines, "units")
+            return "break"
+
+        raw.bind("<MouseWheel>", scroll)
+        raw.bind("<Shift-MouseWheel>", scroll)
+        raw.bind("<Button-4>", scroll)
+        raw.bind("<Button-5>", scroll)
 
     def _attach_tags(self, textbox) -> None:
         raw = getattr(textbox, "_textbox", textbox)
