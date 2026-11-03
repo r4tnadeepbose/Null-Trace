@@ -23,29 +23,31 @@ the queries you send them.
 
 ## Vendored software
 
-### Sherlock 0.16.2 (`sherlock_project/`)
+### Username-probe engine 0.16.2 (`username_probe/`)
 
-Sherlock — "Hunt down social media accounts by username across social networks" —
-Copyright (c) Siddharth Dushantha and contributors, MIT licensed. The full
-source, including `resources/data.json` (the 480-site manifest) and
-`resources/data.schema.json`, ships unmodified in `sherlock_project/` together
-with its `LICENSE`. Upstream project: <https://sherlockproject.xyz/> /
-<https://github.com/sherlock-project/sherlock>.
+Copyright (c) Siddharth Dushantha and contributors, MIT licensed. The manifest
+(`resources/data.json`, 480 sites), its schema and the engine's `LICENSE` ship
+with Null-Trace in `username_probe/`. Source:
+<https://github.com/sherlock-project/sherlock> and
+<https://sherlockproject.xyz/>.
 
-Null-Trace applies two local patches, both marked in the code:
+Null-Trace applies four local patches, each marked in the code:
 
 | File | Change |
 |---|---|
+| package and module names | the package is carried as `username_probe/`, with `probe.py::probe_usernames()` as its entry, so no third-party brand reaches Null-Trace's UI or CLI output |
 | `__init__.py` | version string is pinned instead of read from installed package metadata (`tomli`) |
-| `sherlock.py` | the `.xlsx` export writes with `openpyxl` rather than `pandas`, so Null-Trace does not need pandas |
+| `probe.py` | the `.xlsx` export writes with `openpyxl` rather than `pandas`, so Null-Trace does not need pandas |
+| `notify.py` | the upstream promotional footer is not printed |
 
 Everything else runs as upstream: per-site probe methods, `soft404` handling,
 `errorUrl`/`errorMsg` signatures, WAF detection, the live manifest at
 `data.sherlockproject.xyz`, the false-positive exclusion list at
 `raw.githubusercontent.com/sherlock-project/sherlock` and the CLI, reachable via
-`python scan.py --probe-cli ...`. Inside Null-Trace the feature is exposed as the
-"Username OSINT" module; the upstream name appears only here and in the vendored
-package path.
+`python scan.py --probe-cli ...`. Those three endpoints are upstream URLs — the
+engine can only fetch its own data from its own addresses, so they stay, and they
+are the only places outside this file where the upstream name still appears. The
+feature itself is called Username OSINT everywhere a user can see.
 
 ## Data sources
 
@@ -67,7 +69,7 @@ package path.
 | Google News RSS | news search | public feed |
 | Ookla speedtest | network throughput | public endpoints |
 | data.sherlockproject.xyz | live username-probe manifest | only when "Live upstream manifest" is chosen |
-| sherlock-project/sherlock (GitHub raw) | false-positive exclusion list | skipped when exclusions are unticked |
+| upstream exclusions branch (GitHub raw) | false-positive exclusion list | skipped when exclusions are unticked |
 
 ## Prior art
 
